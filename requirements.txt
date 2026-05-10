@@ -1,2 +1,9 @@
-django
 djangorestframework
+python-dotenv
+django-cors-headers
+djangorestframework-simplejwt
+requests
+pytest
+pytest-django
+pytest-mock
+pytest-cov
