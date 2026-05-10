@@ -1,47 +1,42 @@
 # AGENTS.md - Manuel d'Orchestration ImmoGab
 
-## 1. Contraintes de l'Environnement et Règles de Base
+## 1. Environnement et Contraintes (Google Jules)
 
-Notre environnement de développement est soumis à des limites strictes d'exécution : un maximum de 15 tâches quotidiennes et 3 exécutions simultanées. Pour orchestrer le flux de travail et éviter les écrasements de code (merge conflicts), des règles absolues s'appliquent à tous les agents :
+Notre environnement de développement est soumis à des limites d'exécution : un maximum de 15 tâches quotidiennes et 3 exécutions simultanées. Pour orchestrer ce flux de travail asynchrone et éviter les conflits de fusion (merge conflicts), les règles suivantes sont absolues :
 
-* **Isolation :** Chaque agent doit opérer sur une branche Git isolée et se référer exclusivement aux sous-tâches documentées pour sa session.
+* **Isolation :** Chaque agent opère sur une branche Git isolée.
+* **Périmètre :** Un agent ne doit en aucun cas modifier le code d'un domaine qui n'est pas formellement assigné à sa spécialité.
 
+## 2. Rôles, Spécialisations et Planification (23 Agents)
 
-* **Périmètre :** Un agent ne doit en aucun cas modifier le code d'un domaine ou d'un fichier qui n'est pas formellement assigné à sa spécialité.
+### Les Gardiens et Superviseurs (Exécution Quotidienne - 5 tâches/jour)
 
+* **@Agent-QA (2 agents) - 05h00 & 05h30 :** Responsables des tests unitaires et d'intégration via Pytest. Ils simulent les parcours utilisateurs et les erreurs de webhooks.
+* **@Agent-Security (1 agent) - 06h00 :** Expert DevSecOps. Audite le code pour prévenir les failles, s'assure que les variables sont masquées, configure les tokens JWT avec expiration courte, et garantit la conformité avec le SecBOM de l'ANINF.
+* **@Agent-LeadTech (1 agent) - 07h00 :** Revoit les Pull Requests (PR), vérifie l'architecture globale et l'isolation des composants.
+* **@Agent-Validator (1 agent) - 07h30 :** Filet de sécurité final. Repasse sur les PRs approuvées par le Lead Tech pour s'assurer qu'aucun détail n'a été omis avant l'approbation humaine finale.
 
+### Escouade Backend & Data (Lundis, Mercredis, Vendredis - 9 tâches/jour)
 
-## 2. Rôles et Spécialisations de l'Équipe (20 Agents)
+* **@Agent-DevOps (1 agent) - 08h00 :** Gère exclusivement l'infrastructure Docker (`Dockerfile`, `docker-compose.yml`) et les dépendances.
+* **@Agent-ModelMaker (3 agents) - 08h30, 09h00, 09h30 :** Experts PostgreSQL. Ils créent et maintiennent les fichiers `models.py` (Utilisateurs, Propriétés, Réservations, Cautions) et les migrations.
+* **@Agent-Backend (5 agents) - 10h00 à 12h00 (espacés de 30m) :** Ingénieurs API. Ils construisent la logique métier, les vues et les sérialiseurs via Django REST Framework en consommant les modèles existants.
 
-### Escouade 1 : DevOps, Sécurité & Modélisation (Fondations)
+### Escouade Frontend, Intégrations & Innovation (Mardis, Jeudis, Samedis - 8 tâches/jour)
 
-* **@Agent-DevOps (1 agent) :** Responsable exclusif de l'infrastructure Docker. Cet agent gère uniquement la conteneurisation via les fichiers `Dockerfile`, `docker-compose.yml` et la gestion des paquets dans `requirements.txt`.
-* **@Agent-Security (1 agent) :** Responsable DevSecOps. Son rôle est de configurer les middlewares de sécurité Django (CSRF, CORS, protection des endpoints), de s'assurer que `DEBUG=False` est strictement appliqué, de sécuriser l'authentification JWT (avec des délais d'expiration courts) et d'isoler les variables sensibles. Il audite également le code des autres agents pour prévenir les vulnérabilités.
-* **@Agent-ModelMaker (2 agents) :** Experts de la donnée. Ils ont l'exclusivité sur la création et la modification des fichiers `models.py` (schémas de base de données) et la génération des scripts de migration PostgreSQL.
+* **@Agent-RnD (1 agent) - 08h00 :** Chercheur. Il scrute les outils open-source, évalue la performance de l'architecture, et propose des optimisations sous forme de rapports Markdown.
+* **@Agent-PaymentMock (1 agent) - 08h30 :** Développe l'architecture modulaire `PaymentGateway` et le mock asynchrone des paiements Mobile Money.
+* **@Agent-Jeedom (2 agents) - 09h00 & 09h30 :** Ingénieurs IoT. Ils développent les requêtes HTTP POST pour communiquer avec l'API JSON RPC de Jeedom afin d'actionner les serrures connectées.
+* **@Agent-Frontend (4 agents) - 10h00 à 11h30 (espacés de 30m) :** Développeurs UI/UX. Ils intègrent les maquettes, les formulaires de réservation et le tableau de bord sans jamais altérer le backend.
 
-### Escouade 2 : Backend & API DRF (Logique Métier)
+### Agent Spécial d'Amorçage
 
-* **@Agent-Backend (4 agents) :** Architectes du serveur. Ils construisent les vues (`views.py`), les sérialiseurs (`serializers.py`) et le routage d'URL via Django REST Framework, en se basant sur les modèles créés par l'Escouade 1.
-* **@Agent-PaymentMock (2 agents) :** Spécialistes des flux financiers. Ils développent l'architecture modulaire via le Design Pattern de Stratégie et mettent en place la passerelle de paiement factice (`MockPaymentGateway`) pour simuler les transactions Mobile Money en attendant les clés API de production.
-
-### Escouade 3 : Intégrations & Domotique
-
-* **@Agent-Jeedom (2 agents) :** Ingénieurs IoT. Ils sont dédiés au développement des requêtes HTTP et des webhooks permettant au backend Django de communiquer avec les box Jeedom locales des propriétaires, afin d'actionner les serrures connectées lors des locations événementielles horaires.
-
-
-
-### Escouade 4 : Frontend & Assurance Qualité
-
-* **@Agent-Frontend (5 agents) :** Développeurs UI/UX. Ils créent les interfaces visuelles et les templates, et consomment l'API REST sans jamais altérer la structure ou la logique du serveur backend.
-
-
-* **@Agent-QA (2 agents) :** Responsables de la fiabilité. Ils rédigent les tests unitaires et d'intégration via Pytest pour valider l'intégrité des flux de réservation, des contraintes KYC et du système de paiement.
-* **@Agent-LeadReviewer (1 agent) :** Superviseur final. Il a pour mandat exclusif de relire le code de chaque Pull Request, de s'assurer de la validation sécuritaire par l'Agent-Security, et d'approuver les fusions vers la branche principale.
+* **@Agent-Init (1 agent) - À la demande (1 seule fois) :** Génère l'arborescence initiale de l'application Django (`django-admin startproject`) et configure les dossiers de base avant de laisser la place aux autres escouades.
 
 ## 3. Commandes de l'Espace de Travail
 
-Les agents doivent utiliser les commandes suivantes pour configurer et tester l'environnement de manière autonome :
+Les agents doivent utiliser les commandes suivantes pour configurer et tester l'environnement local :
 
 * Lancer les conteneurs : `docker-compose up -d`
-* Appliquer les migrations de base de données : `docker-compose exec web python manage.py migrate`
-* Exécuter la suite de tests unitaires : `docker-compose exec web pytest`
+* Appliquer les migrations : `docker-compose exec web python manage.py migrate`
+* Exécuter les tests : `docker-compose exec web pytest`
