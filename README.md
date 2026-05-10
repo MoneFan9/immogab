@@ -44,3 +44,10 @@ Le point de friction logistique de la location horaire est géré par la domotiq
 ## 7. Coordination de l'Équipe IA
 
 **Attention à tous les agents :** Vous devez impérativement consulter le fichier `AGENTS.md` situé à la racine de ce projet avant de générer le moindre plan. Ce fichier définit vos rôles stricts (DevOps, Backend, Sécurité, etc.) et les limites de vos interventions. Ne modifiez jamais les fichiers appartenant au périmètre d'un autre agent.
+
+## 8. Communication & Liaison
+
+Le projet utilise un **Agent de Liaison et Secrétaire Technique** pour traduire les directives stratégiques du Chef de Projet en tâches techniques.
+
+*   **Directives Techniques Actuelles :** [Consulter docs/DIRECTIVES_CHEF_DE_PROJET.md](docs/DIRECTIVES_CHEF_DE_PROJET.md)
+*   **Flux de Travail :** Le Chef de Projet définit la vision, l'Agent de Liaison rédige les spécifications, et les escouades d'agents (Backend, Frontend, DevOps) exécutent selon le calendrier défini dans `AGENTS.md`.
