@@ -3,3 +3,7 @@ __pycache__/
 *$py.class
 .env
 db.sqlite3
+
+# Test coverage
+.coverage
+htmlcov/
