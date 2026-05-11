@@ -2,7 +2,6 @@ import requests
 import uuid
 from datetime import datetime
 from abc import ABC, abstractmethod
-from unittest.mock import MagicMock
 
 # --- KYC and Booking Logic ---
 
@@ -30,17 +29,25 @@ def check_booking_overlap(new_start, new_end, existing_bookings):
 
 # --- Search Logic ---
 
+class PropertyMock:
+    def __init__(self, id, title, location, province, type):
+        self.id = id
+        self.title = title
+        self.location = location
+        self.province = province
+        self.type = type
+
 def search_properties(query="", province=None, property_type=None):
     """
     Mocks searching for properties.
     In a real app, this would query the Property model.
     """
-    # Mock data
+    # Mock data - replaced MagicMock with a real class to follow Tech Lead directives
     mock_properties = [
-        MagicMock(id=1, title="Villa Bord de Mer", location="Libreville", province="Estuaire", type="Maison"),
-        MagicMock(id=2, title="Appartement Centre-Ville", location="Libreville", province="Estuaire", type="Appartement"),
-        MagicMock(id=3, title="Terrain Sablière", location="Libreville", province="Estuaire", type="Terrain"),
-        MagicMock(id=4, title="Espace Événementiel Port-Gentil", location="Port-Gentil", province="Ogooué-Maritime", type="Espace Événementiel"),
+        PropertyMock(id=1, title="Villa Bord de Mer", location="Libreville", province="Estuaire", type="Maison"),
+        PropertyMock(id=2, title="Appartement Centre-Ville", location="Libreville", province="Estuaire", type="Appartement"),
+        PropertyMock(id=3, title="Terrain Sablière", location="Libreville", province="Estuaire", type="Terrain"),
+        PropertyMock(id=4, title="Espace Événementiel Port-Gentil", location="Port-Gentil", province="Ogooué-Maritime", type="Espace Événementiel"),
     ]
 
     results = []

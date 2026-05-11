@@ -29,3 +29,10 @@ def test_user_creation_fails_without_id_card():
 
     with pytest.raises(ValueError, match="ID card is required for KYC"):
         validate_kyc(user)
+
+def test_user_creation_fails_without_id_card_attribute():
+    user = MagicMock(spec=[]) # No id_card_number attribute
+    user.username = "noattruser"
+
+    with pytest.raises(ValueError, match="ID card is required for KYC"):
+        validate_kyc(user)

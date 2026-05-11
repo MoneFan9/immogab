@@ -22,5 +22,15 @@ def test_cors_middleware_is_present():
     assert cors_index < common_index
 
 def test_jwt_settings():
-    assert settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"] == timedelta(minutes=60)
+    # Requirement: 15 minutes
+    assert settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"] == timedelta(minutes=15)
     assert settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"] == timedelta(days=1)
+
+def test_secure_cookies():
+    assert settings.SESSION_COOKIE_SECURE is True
+    assert settings.CSRF_COOKIE_SECURE is True
+
+def test_hsts_headers():
+    assert settings.SECURE_HSTS_SECONDS == 31536000
+    assert settings.SECURE_HSTS_INCLUDE_SUBDOMAINS is True
+    assert settings.SECURE_HSTS_PRELOAD is True

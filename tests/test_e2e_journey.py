@@ -73,3 +73,25 @@ def test_e2e_journey_success(mock_post, mock_user, mock_property):
     assert sent_json["method"] == "cmd::exec" # Standard Jeedom method for commands
     assert sent_json["params"]["apikey"] == "secret_key"
     assert sent_json["params"]["id"] == "open_lock"
+
+def test_search_properties_filters():
+    from immogab.services import search_properties
+
+    # Filter by province
+    results = search_properties(province="Estuaire")
+    assert len(results) > 0
+    assert all(p.province == "Estuaire" for p in results)
+
+    # Filter by type
+    results = search_properties(property_type="Appartement")
+    assert len(results) > 0
+    assert all(p.type == "Appartement" for p in results)
+
+    # Combined filter
+    results = search_properties(province="Ogooué-Maritime", property_type="Espace Événementiel")
+    assert len(results) > 0
+    assert all(p.province == "Ogooué-Maritime" and p.type == "Espace Événementiel" for p in results)
+
+    # No results
+    results = search_properties(province="Woleu-Ntem")
+    assert len(results) == 0

@@ -79,3 +79,16 @@ def test_jeedom_webhook_request_exception(mock_post):
 
     with pytest.raises(ConnectionError, match="Jeedom connection failed: Network fail"):
         call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+@patch("requests.post")
+def test_jeedom_webhook_malformed_json(mock_post):
+    # Setup mock response with invalid JSON
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.side_effect = ValueError("Expecting value: line 1 column 1 (char 0)")
+    mock_post.return_value = mock_response
+
+    # This should bubble up the JSON error or be caught by requests exception handling
+    # In our implementation, it would likely raise the ValueError from json()
+    with pytest.raises(ValueError):
+        call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")

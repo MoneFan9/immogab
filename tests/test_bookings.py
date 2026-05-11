@@ -49,3 +49,45 @@ def test_booking_overlap_inner():
     ]
 
     assert check_booking_overlap(new_start, new_end, existing_bookings) is True
+
+def test_booking_overlap_exact():
+    # Booking 1: 10:00 to 12:00
+    start = datetime(2026, 5, 10, 10, 0)
+    end = datetime(2026, 5, 10, 12, 0)
+
+    existing_bookings = [
+        MagicMock(start_time=start, end_time=end)
+    ]
+
+    # Exact same interval
+    assert check_booking_overlap(start, end, existing_bookings) is True
+
+def test_booking_overlap_encompassing():
+    # Booking 1: 10:00 to 12:00
+    b1_start = datetime(2026, 5, 10, 10, 0)
+    b1_end = datetime(2026, 5, 10, 12, 0)
+
+    # New Booking: 09:00 to 13:00 (Encompasses b1)
+    new_start = datetime(2026, 5, 10, 9, 0)
+    new_end = datetime(2026, 5, 10, 13, 0)
+
+    existing_bookings = [
+        MagicMock(start_time=b1_start, end_time=b1_end)
+    ]
+
+    assert check_booking_overlap(new_start, new_end, existing_bookings) is True
+
+def test_booking_no_overlap_before():
+    # Booking 1: 10:00 to 12:00
+    b1_start = datetime(2026, 5, 10, 10, 0)
+    b1_end = datetime(2026, 5, 10, 12, 0)
+
+    # New Booking: 08:00 to 10:00
+    new_start = datetime(2026, 5, 10, 8, 0)
+    new_end = datetime(2026, 5, 10, 10, 0)
+
+    existing_bookings = [
+        MagicMock(start_time=b1_start, end_time=b1_end)
+    ]
+
+    assert check_booking_overlap(new_start, new_end, existing_bookings) is False
