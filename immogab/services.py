@@ -2,7 +2,17 @@ import requests
 import uuid
 from datetime import datetime
 from abc import ABC, abstractmethod
-from unittest.mock import MagicMock
+
+# --- Models Mock (Temporary until real models are used) ---
+
+class PropertyMock:
+    def __init__(self, id, title, location, province, type, hourly_rate=0):
+        self.id = id
+        self.title = title
+        self.location = location
+        self.province = province
+        self.type = type
+        self.hourly_rate = hourly_rate
 
 # --- KYC and Booking Logic ---
 
@@ -35,12 +45,12 @@ def search_properties(query="", province=None, property_type=None):
     Mocks searching for properties.
     In a real app, this would query the Property model.
     """
-    # Mock data
+    # Mock data using simple class instead of MagicMock
     mock_properties = [
-        MagicMock(id=1, title="Villa Bord de Mer", location="Libreville", province="Estuaire", type="Maison"),
-        MagicMock(id=2, title="Appartement Centre-Ville", location="Libreville", province="Estuaire", type="Appartement"),
-        MagicMock(id=3, title="Terrain Sablière", location="Libreville", province="Estuaire", type="Terrain"),
-        MagicMock(id=4, title="Espace Événementiel Port-Gentil", location="Port-Gentil", province="Ogooué-Maritime", type="Espace Événementiel"),
+        PropertyMock(id=1, title="Villa Bord de Mer", location="Libreville", province="Estuaire", type="Maison", hourly_rate=15000),
+        PropertyMock(id=2, title="Appartement Centre-Ville", location="Libreville", province="Estuaire", type="Appartement", hourly_rate=5000),
+        PropertyMock(id=3, title="Terrain Sablière", location="Libreville", province="Estuaire", type="Terrain", hourly_rate=0),
+        PropertyMock(id=4, title="Espace Événementiel Port-Gentil", location="Port-Gentil", province="Ogooué-Maritime", type="Espace Événementiel", hourly_rate=25000),
     ]
 
     results = []
