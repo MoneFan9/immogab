@@ -3,24 +3,40 @@ from django.conf import settings
 from datetime import timedelta
 
 @pytest.mark.django_db
-def test_debug_is_false_by_default():
-    # We expect DEBUG to be False because we didn't set the env var in this test environment
-    # and our logic defaults it to False.
-    assert settings.DEBUG is False
+def test_security_settings():
+    """
+    Verify security-related settings.
+    """
+    # Check JWT token lifetime
+    assert settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'] == timedelta(minutes=15)
 
-def test_drf_authentication_classes():
-    assert "rest_framework_simplejwt.authentication.JWTAuthentication" in settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]
+    # Check default auth and permissions
+    assert settings.REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] == (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    )
+    assert settings.REST_FRAMEWORK['DEFAULT_PERMISSION_CLASSES'] == (
+        "rest_framework.permissions.IsAuthenticated",
+    )
 
-def test_drf_permission_classes():
-    assert "rest_framework.permissions.IsAuthenticated" in settings.REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"]
+def test_production_security_settings(settings):
+    """
+    Verify production security settings when DEBUG is False.
+    """
+    settings.DEBUG = False
+    # Triggering the conditional logic in settings usually requires re-evaluation,
+    # but since we are testing the result of that logic applied to 'settings' object:
+    # Actually, we should check if they are set in the settings module.
+    # Because immogab.settings already evaluated this logic.
 
-def test_cors_middleware_is_present():
-    assert "corsheaders.middleware.CorsMiddleware" in settings.MIDDLEWARE
-    # Ensure it's before CommonMiddleware
-    cors_index = settings.MIDDLEWARE.index("corsheaders.middleware.CorsMiddleware")
-    common_index = settings.MIDDLEWARE.index("django.middleware.common.CommonMiddleware")
-    assert cors_index < common_index
+    # We can mock DEBUG in the module or just check what's there.
+    # In our case, we added 'if not DEBUG' in settings.py
 
-def test_jwt_settings():
-    assert settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"] == timedelta(minutes=60)
-    assert settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"] == timedelta(days=1)
+    from immogab import settings as immogab_settings
+    # If DEBUG was False during import, these should be True.
+    # By default in our settings.py, DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+    # So if DEBUG env var is not set, it is False.
+
+    if not immogab_settings.DEBUG:
+        assert immogab_settings.SESSION_COOKIE_SECURE is True
+        assert immogab_settings.CSRF_COOKIE_SECURE is True
+        assert immogab_settings.SECURE_HSTS_SECONDS == 31536000

@@ -2,30 +2,36 @@ import pytest
 from unittest.mock import MagicMock
 from immogab.services import validate_kyc
 
+@pytest.mark.django_db
 def test_user_creation_requires_kyc():
     """
     Simulate user creation and verify KYC requirement.
     """
     user_data = {
         "username": "johndoe",
-        "id_card_number": "GAB12345",
+        "cni_number": "GAB12345",
     }
 
-    # Simulate a user model instance
-    user = MagicMock()
-    user.username = user_data["username"]
-    user.id_card_number = user_data["id_card_number"]
-    user.is_kyc_verified = False
+    # Use a simple class instead of MagicMock for business logic where possible,
+    # but here we can just use a simple object as it's not querying the DB yet in validate_kyc
+    class SimpleUser:
+        def __init__(self, cni_number):
+            self.cni_number = cni_number
+            self.is_kyc_verified = False
 
-    # The service should be able to validate based on id_card_number presence
+    user = SimpleUser(cni_number=user_data["cni_number"])
+
+    # The service should be able to validate based on cni_number presence
     assert validate_kyc(user) is True
     assert user.is_kyc_verified is True
 
 def test_user_creation_fails_without_id_card():
-    user = MagicMock()
-    user.username = "baduser"
-    user.id_card_number = None
-    user.is_kyc_verified = False
+    class SimpleUser:
+        def __init__(self, cni_number):
+            self.cni_number = cni_number
+            self.is_kyc_verified = False
+
+    user = SimpleUser(cni_number=None)
 
     with pytest.raises(ValueError, match="ID card is required for KYC"):
         validate_kyc(user)
