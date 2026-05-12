@@ -79,3 +79,22 @@ def test_jeedom_webhook_request_exception(mock_post):
 
     with pytest.raises(ConnectionError, match="Jeedom connection failed: Network fail"):
         call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+@patch("requests.post")
+def test_jeedom_webhook_malformed_json(mock_post):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+    mock_post.return_value = mock_response
+
+    with pytest.raises(ValueError, match="Invalid JSON"):
+        call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+@patch("requests.post")
+def test_jeedom_webhook_unexpected_status(mock_post):
+    mock_response = MagicMock()
+    mock_response.status_code = 403
+    mock_post.return_value = mock_response
+
+    with pytest.raises(RuntimeError, match="Jeedom error: 403"):
+        call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")

@@ -30,17 +30,26 @@ def check_booking_overlap(new_start, new_end, existing_bookings):
 
 # --- Search Logic ---
 
+class PropertyMock:
+    """Standard Python object to replace MagicMock for business logic."""
+    def __init__(self, id, title, location, province, type):
+        self.id = id
+        self.title = title
+        self.location = location
+        self.province = province
+        self.type = type
+
 def search_properties(query="", province=None, property_type=None):
     """
     Mocks searching for properties.
     In a real app, this would query the Property model.
     """
-    # Mock data
+    # Mock data using standard objects
     mock_properties = [
-        MagicMock(id=1, title="Villa Bord de Mer", location="Libreville", province="Estuaire", type="Maison"),
-        MagicMock(id=2, title="Appartement Centre-Ville", location="Libreville", province="Estuaire", type="Appartement"),
-        MagicMock(id=3, title="Terrain Sablière", location="Libreville", province="Estuaire", type="Terrain"),
-        MagicMock(id=4, title="Espace Événementiel Port-Gentil", location="Port-Gentil", province="Ogooué-Maritime", type="Espace Événementiel"),
+        PropertyMock(id=1, title="Villa Bord de Mer", location="Libreville", province="ESTUAIRE", type="MAISON"),
+        PropertyMock(id=2, title="Appartement Centre-Ville", location="Libreville", province="ESTUAIRE", type="APPARTEMENT"),
+        PropertyMock(id=3, title="Terrain Sablière", location="Libreville", province="ESTUAIRE", type="TERRAIN"),
+        PropertyMock(id=4, title="Espace Événementiel Port-Gentil", location="Port-Gentil", province="OGOOUÉ-MARITIME", type="ESPACE_EVENEMENTIEL"),
     ]
 
     results = []
