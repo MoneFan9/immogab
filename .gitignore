@@ -1,9 +1,13 @@
+# root
+/home/jules/.npm/
+/home/jules/.pyenv/
+/home/jules/verification/
+
+# project
 __pycache__/
 *.py[cod]
 *$py.class
 .env
 db.sqlite3
-
-# Test coverage
-.coverage
-htmlcov/
+/frontend/node_modules/
+/frontend/dist/
