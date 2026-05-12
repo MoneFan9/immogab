@@ -46,10 +46,11 @@ def test_e2e_journey_success(mock_post, mock_user, mock_property):
 
     # 4. Payment (Fictitious)
     # We expect a PaymentGateway and MockPaymentGateway
-    from immogab.services import MockPaymentGateway
+    from payments.gateways.mock import MockPaymentGateway
     gateway = MockPaymentGateway()
     payment_result = gateway.process_payment(amount=20000, currency="XAF", reference="BOOK-123")
-    assert payment_result["status"] == "success"
+    # Updated to 'initiated' due to async simulation
+    assert payment_result["status"] == "initiated"
 
     # 5. Jeedom Signal
     # Mocking successful Jeedom response
