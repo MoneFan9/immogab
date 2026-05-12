@@ -46,9 +46,14 @@ def test_e2e_journey_success(mock_post, mock_user, mock_property):
 
     # 4. Payment (Fictitious)
     # We expect a PaymentGateway and MockPaymentGateway
-    from immogab.services import MockPaymentGateway
-    gateway = MockPaymentGateway()
-    payment_result = gateway.process_payment(amount=20000, currency="XAF", reference="BOOK-123")
+    from payments.factory import PaymentGatewayFactory
+    gateway = PaymentGatewayFactory.get_gateway("mock")
+    payment_result = gateway.initiate_payment(
+        amount=20000,
+        currency="XAF",
+        reference="BOOK-123",
+        customer_info={"phone": "+24101234567"}
+    )
     assert payment_result["status"] == "success"
 
     # 5. Jeedom Signal

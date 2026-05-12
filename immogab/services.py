@@ -58,26 +58,6 @@ def search_properties(query="", province=None, property_type=None):
 
     return results
 
-# --- Payment Logic (Strategy Pattern) ---
-
-class PaymentGateway(ABC):
-    @abstractmethod
-    def process_payment(self, amount, currency, reference):
-        pass
-
-class MockPaymentGateway(PaymentGateway):
-    """
-    Mock implementation that validates automatically.
-    """
-    def process_payment(self, amount, currency, reference):
-        return {
-            "status": "success",
-            "transaction_id": str(uuid.uuid4()),
-            "amount": amount,
-            "currency": currency,
-            "reference": reference,
-            "timestamp": datetime.now().isoformat()
-        }
 
 # --- IoT Logic (Jeedom JSON-RPC 2.0) ---
 
