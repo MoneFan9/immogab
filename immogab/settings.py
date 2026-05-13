@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    # Local apps
+    "core",
+    "properties",
 ]
 
 MIDDLEWARE = [
@@ -125,6 +128,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+AUTH_USER_MODEL = 'core.User'
 
 from datetime import timedelta
 
