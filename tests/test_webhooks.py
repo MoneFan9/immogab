@@ -79,3 +79,45 @@ def test_jeedom_webhook_request_exception(mock_post):
 
     with pytest.raises(ConnectionError, match="Jeedom connection failed: Network fail"):
         call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+@patch("requests.post")
+def test_jeedom_webhook_malformed_json(mock_post):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    # Simulate malformed JSON by making .json() raise an exception
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+    mock_post.return_value = mock_response
+
+    with pytest.raises(ConnectionError, match="Jeedom connection failed: Invalid JSON"):
+        call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+# --- Payment Webhook Tests ---
+
+from immogab.services import MockPaymentGateway
+
+def test_payment_webhook_success():
+    gateway = MockPaymentGateway()
+    payload = {
+        "transaction_id": "TXN-123",
+        "event": "payment.success",
+        "amount": 5000
+    }
+
+    result = gateway.handle_webhook(payload, signature="valid_sig")
+
+    assert result["status"] == "processed"
+    assert result["transaction_id"] == "TXN-123"
+
+def test_payment_webhook_invalid_signature():
+    gateway = MockPaymentGateway()
+    payload = {"transaction_id": "TXN-123"}
+
+    with pytest.raises(PermissionError, match="Invalid webhook signature"):
+        gateway.handle_webhook(payload, signature="invalid_sig")
+
+def test_payment_webhook_missing_data():
+    gateway = MockPaymentGateway()
+    payload = {"event": "payment.success"} # Missing transaction_id
+
+    with pytest.raises(ValueError, match="Missing transaction_id in payload"):
+        gateway.handle_webhook(payload)
