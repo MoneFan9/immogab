@@ -42,4 +42,15 @@ Le projet ne peut pas être certifié en l'état. Le "Gatekeeper" a été trop i
 **Commentaire Final :**
 *Audit Qualité Ultime : Échec. Les fondations obligatoires (Docker, PostgreSQL, Modularité) ne sont pas respectées sur les branches validées. J'exige une mise en conformité immédiate de la stack technique avant toute nouvelle demande de revue.*
 
+---
+
+## 4. Correctifs de Sécurité (Audit Cyber du 13/05/2026)
+
+*   **JWT & Authentification :** `ACCESS_TOKEN_LIFETIME` réduit à 15 minutes.
+*   **En-têtes de Sécurité :** Activation forcée de `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` et HSTS (`SECURE_HSTS_SECONDS=31536000`) lorsque `DEBUG=False`.
+*   **Fail-Fast Configuration :** `SECRET_KEY` lève désormais une `ValueError` si absente en production.
+*   **Propreté du Dépôt :** Suppression des fichiers `__pycache__` du suivi Git et renforcement de la politique de commit.
+
+**Statut Sécurité : CONFORME** (sous réserve de déploiement avec Docker/PostgreSQL comme exigé précédemment).
+
 **Signature :** Jules, Auditeur Qualité Ultime ImmoGab.
