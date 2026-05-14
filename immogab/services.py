@@ -1,8 +1,14 @@
 import requests
 import uuid
+import logging
 from datetime import datetime
 from abc import ABC, abstractmethod
 from unittest.mock import MagicMock
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # --- KYC and Booking Logic ---
 
@@ -81,10 +87,27 @@ class MockPaymentGateway(PaymentGateway):
 
 # --- IoT Logic (Jeedom JSON-RPC 2.0) ---
 
+def get_jeedom_session():
+    """
+    Creates a requests Session with a retry strategy for Jeedom communication.
+    Handles packet loss and transient errors with exponential backoff.
+    """
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["POST"]
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
 def call_jeedom_webhook(api_url, command, api_key):
     """
     Calls the Jeedom API to execute a command (e.g., smart lock).
-    Uses JSON-RPC 2.0 protocol.
+    Uses JSON-RPC 2.0 protocol with robust retry and timeout management.
     """
     payload = {
         "jsonrpc": "2.0",
@@ -96,27 +119,44 @@ def call_jeedom_webhook(api_url, command, api_key):
         "id": 1
     }
 
+    logger.info(f"Triggering Jeedom webhook for command {command} at {api_url}")
+    session = get_jeedom_session()
+
     try:
-        response = requests.post(
+        # Split timeout: 3.05s to connect (packet loss), 10s to read (slow IoT/box)
+        response = session.post(
             api_url,
             json=payload,
-            timeout=5
+            timeout=(3.05, 10)
         )
 
         if response.status_code == 200:
-            # Additional check for JSON-RPC error in 200 response
             data = response.json()
             if "error" in data:
-                raise RuntimeError(f"Jeedom RPC error: {data['error'].get('message', 'Unknown error')}")
+                error_msg = data['error'].get('message', 'Unknown error')
+                logger.error(f"Jeedom RPC error for command {command}: {error_msg}")
+                raise RuntimeError(f"Jeedom RPC error: {error_msg}")
+
+            logger.info(f"Jeedom webhook successfully executed for command {command}")
             return True
+
         elif response.status_code == 401:
+            logger.error(f"Jeedom authentication failed for command {command}")
             raise PermissionError("Jeedom authentication failed")
+
         elif response.status_code >= 500:
+            logger.error(f"Jeedom server error (HTTP {response.status_code}) for command {command}")
             raise RuntimeError("Jeedom server error")
+
         else:
+            logger.error(f"Jeedom unexpected error (HTTP {response.status_code}) for command {command}")
             raise RuntimeError(f"Jeedom error: {response.status_code}")
 
     except requests.exceptions.Timeout:
+        logger.error(f"Jeedom connection timed out for command {command} at {api_url}")
         raise ConnectionError("Jeedom connection timed out")
     except requests.exceptions.RequestException as e:
+        logger.error(f"Jeedom connection failed for command {command}: {str(e)}")
         raise ConnectionError(f"Jeedom connection failed: {str(e)}")
+    finally:
+        session.close()
