@@ -46,7 +46,15 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    # Local apps
+    "core",
+    "properties",
+    "bookings",
+    "escrow",
+    "payments",
 ]
+
+AUTH_USER_MODEL = "core.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -127,6 +135,14 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 from datetime import timedelta
+
+DJANGO_TESTING = os.getenv("DJANGO_TESTING", "False").lower() == "true"
+
+if DJANGO_TESTING:
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+    CELERY_BROKER_URL = 'memory://'
+    CELERY_RESULT_BACKEND = 'cache+memory://'
 
 # REST Framework configuration
 REST_FRAMEWORK = {
