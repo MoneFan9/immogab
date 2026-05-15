@@ -22,5 +22,6 @@ def test_cors_middleware_is_present():
     assert cors_index < common_index
 
 def test_jwt_settings():
-    assert settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"] == timedelta(minutes=60)
+    # Updated to 15 minutes for security hardening as per README
+    assert settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"] == timedelta(minutes=15)
     assert settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"] == timedelta(days=1)
