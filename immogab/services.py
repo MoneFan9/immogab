@@ -67,17 +67,27 @@ class PaymentGateway(ABC):
 
 class MockPaymentGateway(PaymentGateway):
     """
+    DEPRECATED: Use payments.services.MockPaymentGateway instead.
     Mock implementation that validates automatically.
     """
     def process_payment(self, amount, currency, reference):
-        return {
-            "status": "success",
-            "transaction_id": str(uuid.uuid4()),
-            "amount": amount,
-            "currency": currency,
-            "reference": reference,
-            "timestamp": datetime.now().isoformat()
-        }
+        from payments.services import MockPaymentGateway as NewMockGateway
+        from bookings.models import Booking
+        from django.utils import timezone
+
+        # Backward compatibility layer for old tests
+        booking, _ = Booking.objects.get_or_create(
+            id=999, # Dummy ID for legacy support
+            defaults={
+                'user_id': 1, # Assuming user with ID 1 exists or is mocked
+                'property_id': 1,
+                'start_time': timezone.now(),
+                'end_time': timezone.now(),
+                'total_price': amount
+            }
+        )
+        new_gateway = NewMockGateway()
+        return new_gateway.process_payment(booking, amount, currency, "Legacy Provider")
 
 # --- IoT Logic (Jeedom JSON-RPC 2.0) ---
 
