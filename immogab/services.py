@@ -22,6 +22,9 @@ def check_booking_overlap(new_start, new_end, existing_bookings):
     Checks if a new booking interval overlaps with any existing bookings.
     Intervals are [start, end).
     """
+    if new_start >= new_end:
+        raise ValueError("End time must be after start time")
+
     for booking in existing_bookings:
         # Overlap if: (StartA < EndB) and (EndA > StartB)
         if new_start < booking.end_time and new_end > booking.start_time:
@@ -48,9 +51,9 @@ def search_properties(query="", province=None, property_type=None):
         match = True
         if query and query.lower() not in prop.title.lower() and query.lower() not in prop.location.lower():
             match = False
-        if province and prop.province != province:
+        if province and (prop.province or "").lower() != province.lower():
             match = False
-        if property_type and prop.type != property_type:
+        if property_type and (prop.type or "").lower() != property_type.lower():
             match = False
 
         if match:
