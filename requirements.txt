@@ -7,3 +7,7 @@ pytest
 pytest-django
 pytest-mock
 pytest-cov
+psycopg2-binary
+celery
+redis
+dj-database-url
