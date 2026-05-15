@@ -79,3 +79,29 @@ def test_jeedom_webhook_request_exception(mock_post):
 
     with pytest.raises(ConnectionError, match="Jeedom connection failed: Network fail"):
         call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+@patch("requests.post")
+def test_jeedom_webhook_malformed_json(mock_post):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    # Simulate malformed JSON by making json() raise an error
+    mock_response.json.side_effect = ValueError("No JSON object could be decoded")
+    mock_post.return_value = mock_response
+
+    with pytest.raises(ConnectionError, match="Jeedom connection failed: No JSON object could be decoded"):
+        call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+@patch("requests.post")
+def test_jeedom_webhook_empty_rpc_error(mock_post):
+    # Setup mock response with RPC error but missing message
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "jsonrpc": "2.0",
+        "error": {"code": -1},
+        "id": 1
+    }
+    mock_post.return_value = mock_response
+
+    with pytest.raises(RuntimeError, match="Jeedom RPC error: Unknown error"):
+        call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")

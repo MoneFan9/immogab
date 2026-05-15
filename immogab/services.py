@@ -11,7 +11,8 @@ def validate_kyc(user):
     Validates that a user has provided an ID card number for KYC.
     Sets is_kyc_verified to True if valid.
     """
-    if not hasattr(user, 'id_card_number') or not user.id_card_number:
+    id_card = getattr(user, 'id_card_number', None)
+    if not id_card:
         raise ValueError("ID card is required for KYC")
 
     user.is_kyc_verified = True
@@ -22,6 +23,9 @@ def check_booking_overlap(new_start, new_end, existing_bookings):
     Checks if a new booking interval overlaps with any existing bookings.
     Intervals are [start, end).
     """
+    if new_start >= new_end:
+        raise ValueError("Start time must be before end time")
+
     for booking in existing_bookings:
         # Overlap if: (StartA < EndB) and (EndA > StartB)
         if new_start < booking.end_time and new_end > booking.start_time:
@@ -105,7 +109,11 @@ def call_jeedom_webhook(api_url, command, api_key):
 
         if response.status_code == 200:
             # Additional check for JSON-RPC error in 200 response
-            data = response.json()
+            try:
+                data = response.json()
+            except ValueError as e:
+                raise ConnectionError(f"Jeedom connection failed: {str(e)}")
+
             if "error" in data:
                 raise RuntimeError(f"Jeedom RPC error: {data['error'].get('message', 'Unknown error')}")
             return True

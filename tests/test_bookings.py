@@ -49,3 +49,47 @@ def test_booking_overlap_inner():
     ]
 
     assert check_booking_overlap(new_start, new_end, existing_bookings) is True
+
+def test_booking_overlap_identical():
+    start = datetime(2026, 5, 10, 10, 0)
+    end = datetime(2026, 5, 10, 12, 0)
+    existing_bookings = [MagicMock(start_time=start, end_time=end)]
+    assert check_booking_overlap(start, end, existing_bookings) is True
+
+def test_booking_overlap_encompassing():
+    # Booking 1: 12:00 to 14:00
+    b1_start = datetime(2026, 5, 10, 12, 0)
+    b1_end = datetime(2026, 5, 10, 14, 0)
+
+    # New Booking: 10:00 to 16:00 (Encompasses b1)
+    new_start = datetime(2026, 5, 10, 10, 0)
+    new_end = datetime(2026, 5, 10, 16, 0)
+
+    existing_bookings = [MagicMock(start_time=b1_start, end_time=b1_end)]
+    assert check_booking_overlap(new_start, new_end, existing_bookings) is True
+
+def test_booking_no_overlap_before():
+    # Booking 1: 12:00 to 14:00
+    b1_start = datetime(2026, 5, 10, 12, 0)
+    b1_end = datetime(2026, 5, 10, 14, 0)
+
+    # New Booking: 08:00 to 10:00
+    new_start = datetime(2026, 5, 10, 8, 0)
+    new_end = datetime(2026, 5, 10, 10, 0)
+
+    existing_bookings = [MagicMock(start_time=b1_start, end_time=b1_end)]
+    assert check_booking_overlap(new_start, new_end, existing_bookings) is False
+
+def test_booking_invalid_interval_fails():
+    # Inverted interval should raise ValueError (to be implemented in services.py)
+    new_start = datetime(2026, 5, 10, 14, 0)
+    new_end = datetime(2026, 5, 10, 10, 0)
+    existing_bookings = []
+
+    with pytest.raises(ValueError, match="Start time must be before end time"):
+        check_booking_overlap(new_start, new_end, existing_bookings)
+
+def test_booking_empty_interval_fails():
+    start = datetime(2026, 5, 10, 10, 0)
+    with pytest.raises(ValueError, match="Start time must be before end time"):
+        check_booking_overlap(start, start, [])
