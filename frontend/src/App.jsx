@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, Search, Calendar, User, Menu } from 'lucide-react';
+import { Home, Search, User, Menu } from 'lucide-react';
 import { propertyService } from './services/propertyService';
 import SearchBar from './components/SearchBar';
 import PropertyCard from './components/PropertyCard';
@@ -20,8 +20,7 @@ function App() {
 
   useEffect(() => {
     fetchProperties(filters);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchProperties, filters]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,13 +54,13 @@ function App() {
       </nav>
 
       {/* Hero Section */}
-      <header className="bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950 py-28 px-4 relative overflow-hidden">
+      <header className="bg-blue-900 py-28 px-4 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
             <div className="absolute -right-20 -top-20 w-96 h-96 bg-blue-400 rounded-full blur-3xl" />
             <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-blue-600 rounded-full blur-3xl" />
         </div>
         <div className="max-w-7xl mx-auto text-center relative z-10">
-          <h1 className="text-6xl md:text-8xl font-extrabold text-white mb-6 tracking-tighter">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">
             Trouvez votre maison <br className="hidden md:block" /> idéale au <span className="text-blue-400">Gabon</span>
           </h1>
           <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
@@ -110,15 +109,8 @@ function App() {
 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 p-0 animate-pulse">
-                  <div className="h-64 bg-gray-200" />
-                  <div className="p-4 space-y-3">
-                    <div className="h-6 bg-gray-200 rounded w-3/4" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
-                    <div className="h-10 bg-gray-200 rounded w-full mt-4" />
-                  </div>
-                </div>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-gray-200 rounded-xl h-96 animate-pulse" />
               ))}
             </div>
           ) : (
@@ -142,43 +134,6 @@ function App() {
                 <p className="text-gray-500">Essayez de modifier vos filtres de recherche.</p>
             </div>
           )}
-        </section>
-
-        {/* Comment ça marche Section */}
-        <section className="mt-32">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Comment ça marche ?</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              ImmoGab simplifie la location et l'achat immobilier au Gabon avec une approche moderne et sécurisée.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {[
-              {
-                icon: <Search className="text-blue-600" size={32} />,
-                title: "Recherchez",
-                desc: "Parcourez des milliers d'annonces de maisons, appartements ou espaces événementiels."
-              },
-              {
-                icon: <Calendar className="text-blue-600" size={32} />,
-                title: "Réservez en ligne",
-                desc: "Planifiez votre visite ou louez à l'heure directement depuis la plateforme en toute sécurité."
-              },
-              {
-                icon: <User className="text-blue-600" size={32} />,
-                title: "Accédez au bien",
-                desc: "Grâce à nos serrures connectées IoT, accédez au logement sans attendre la remise des clés."
-              }
-            ].map((step, idx) => (
-              <div key={idx} className="bg-white p-8 rounded-3xl border border-gray-100 hover:shadow-xl transition-shadow text-center">
-                <div className="bg-blue-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  {step.icon}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                <p className="text-gray-600">{step.desc}</p>
-              </div>
-            ))}
-          </div>
         </section>
       </main>
 
