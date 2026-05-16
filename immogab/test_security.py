@@ -22,6 +22,14 @@ def test_cors_middleware_is_present():
     assert cors_index < common_index
 
 def test_jwt_settings():
-    # Updated to 15 minutes for security hardening as per README
     assert settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"] == timedelta(minutes=15)
     assert settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"] == timedelta(days=1)
+    assert settings.SIMPLE_JWT["ROTATE_REFRESH_TOKENS"] is True
+    assert "rest_framework_simplejwt.token_blacklist" in settings.INSTALLED_APPS
+
+def test_production_security_headers_logic():
+    # If DEBUG is False (mocked or actual), check if headers are set
+    if not settings.DEBUG:
+        assert settings.SESSION_COOKIE_SECURE is True
+        assert settings.CSRF_COOKIE_SECURE is True
+        assert settings.SECURE_HSTS_SECONDS == 31536000
