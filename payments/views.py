@@ -1,37 +1,29 @@
-import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from payments.providers.airtel import AirtelMoneyGateway
-from payments.providers.moov import MoovMoneyGateway
-from payments.models import PaymentTransaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Payment
+import logging
 
-@csrf_exempt
-@require_POST
-def payment_webhook(request, provider):
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+logger = logging.getLogger(__name__)
 
-    if provider == "airtel":
-        gateway = AirtelMoneyGateway()
-    elif provider == "moov":
-        gateway = MoovMoneyGateway()
-    else:
-        return JsonResponse({"error": "Unknown provider"}, status=404)
+class MobileMoneyWebhookView(APIView):
+    """
+    Endpoint for receiving asynchronous notifications from mobile money providers.
+    In this mock version, it logs the callback and confirms reception.
+    """
+    permission_classes = [] # Ideally restricted by IP or secret header
 
-    # Process webhook using the provider gateway
-    result = gateway.handle_webhook(data, request.headers)
+    def post(self, request, provider, *args, **kwargs):
+        data = request.data
+        reference = data.get('reference')
+        external_status = data.get('status') # e.g. 'SUCCESS' or 'FAILED'
 
-    if result.get("transaction_id"):
+        logger.info(f"Received webhook from {provider} for reference {reference}: {external_status}")
+
         try:
-            tx = PaymentTransaction.objects.get(transaction_id=result["transaction_id"])
-            tx.status = 'SUCCESS' if result["status"] == "success" else 'FAILED'
-            tx.external_reference = result.get("external_reference")
-            tx.save()
-        except PaymentTransaction.DoesNotExist:
-            # Optionally log orphan webhooks
-            pass
-
-    return JsonResponse({"status": "received"})
+            payment = Payment.objects.get(reference=reference)
+            # In a real scenario, we would verify signatures and update status here
+            # But our Celery task already simulates the update for the mock.
+            return Response({"status": "acknowledged"}, status=status.HTTP_200_OK)
+        except Payment.DoesNotExist:
+            return Response({"error": "Payment not found"}, status=status.HTTP_404_NOT_FOUND)

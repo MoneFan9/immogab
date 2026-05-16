@@ -1,10 +1,9 @@
 from django.contrib import admin
-from django.urls import path
-from payments.views import payment_webhook
+from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/payments/webhook/<str:provider>/", payment_webhook, name="payment-webhook"),
+    path("api/payments/", include("payments.urls")),
 ]
 
 if settings.DEBUG:

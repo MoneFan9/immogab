@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "payments",
+    "bookings",
 ]
 
 AUTH_USER_MODEL = "users.User"
@@ -138,8 +139,18 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-# Auth model
-AUTH_USER_MODEL = "users.User"
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
+
+# ImmoGab Payment Settings
+IMMOGAB_COMMISSION_RATE = 0.15  # 15% commission
+
+from datetime import timedelta
 
 # REST Framework configuration
 REST_FRAMEWORK = {

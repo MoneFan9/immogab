@@ -1,26 +1,23 @@
 from django.db import models
+import uuid
 
-class PaymentTransaction(models.Model):
+class Payment(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'En attente'),
         ('SUCCESS', 'Réussi'),
         ('FAILED', 'Échoué'),
     ]
 
-    PROVIDER_CHOICES = [
-        ('AIRTEL', 'Airtel Money'),
-        ('MOOV', 'Moov Money'),
-    ]
-
-    transaction_id = models.CharField(max_length=100, unique=True)
-    external_reference = models.CharField(max_length=100, blank=True, null=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=3, default='XAF')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-    provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES)
-    phone_number = models.CharField(max_length=20)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking = models.ForeignKey('bookings.Booking', on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    commission_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    host_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    reference = models.CharField(max_length=100, unique=True)
+    provider = models.CharField(max_length=50, help_text="e.g., Airtel Money, Moov Money")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.provider} - {self.transaction_id} - {self.status}"
+        return f"Payment {self.reference} - {self.status}"
