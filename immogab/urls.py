@@ -1,15 +1,10 @@
 from django.contrib import admin
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from bookings.views import PropertyViewSet, BookingViewSet
-
-router = DefaultRouter()
-router.register(r"properties", PropertyViewSet)
-router.register(r"bookings", BookingViewSet)
+from django.urls import path
+from payments.views import payment_webhook
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include(router.urls)),
+    path("api/payments/webhook/<str:provider>/", payment_webhook, name="payment-webhook"),
 ]
 
 if settings.DEBUG:
