@@ -18,7 +18,7 @@ export default function PropertyCard({ property, onClick }) {
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group"
+      className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
       onClick={() => onClick(property)}
     >
       <div className="relative h-64 overflow-hidden">

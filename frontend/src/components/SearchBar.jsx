@@ -2,22 +2,15 @@ import { Search } from 'lucide-react';
 
 export default function SearchBar({ filters, setFilters, onSearch }) {
   const provinces = [
-    { value: 'estuaire', label: 'Estuaire' },
-    { value: 'haut_ogooue', label: 'Haut-Ogooué' },
-    { value: 'moyen_ogooue', label: 'Moyen-Ogooué' },
-    { value: 'ngounie', label: 'Ngounié' },
-    { value: 'nyanga', label: 'Nyanga' },
-    { value: 'ogooue_ivindo', label: 'Ogooué-Ivindo' },
-    { value: 'ogooue_lolo', label: 'Ogooué-Lolo' },
-    { value: 'ogooue_maritime', label: 'Ogooué-Maritime' },
-    { value: 'woleu_ntem', label: 'Woleu-Ntem' }
+    'ESTUAIRE', 'HAUT_OGOOUÉ', 'MOYEN_OGOOUÉ', 'NGOUNIÉ',
+    'NYANGA', 'OGOOUÉ_IVINDO', 'OGOOUÉ_LOLO', 'OGOOUÉ_MARITIME', 'WOLEU_NTEM'
   ];
 
   const types = [
-    { value: 'villa', label: 'Villa' },
-    { value: 'appartement', label: 'Appartement' },
-    { value: 'terrain', label: 'Terrain' },
-    { value: 'espace_evenementiel', label: 'Événementiel' },
+    { value: 'MAISON', label: 'Maison' },
+    { value: 'APPARTEMENT', label: 'Appartement' },
+    { value: 'TERRAIN', label: 'Terrain' },
+    { value: 'ESPACE_EVENEMENTIEL', label: 'Événementiel' },
   ];
 
   return (
@@ -42,7 +35,7 @@ export default function SearchBar({ filters, setFilters, onSearch }) {
           >
             <option value="">Toutes les provinces</option>
             {provinces.map(p => (
-              <option key={p.value} value={p.value}>{p.label}</option>
+              <option key={p} value={p}>{p.replace('_', '-')}</option>
             ))}
           </select>
 
