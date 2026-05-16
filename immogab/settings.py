@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 import dj_database_url
 from pathlib import Path
+from datetime import timedelta
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -47,6 +48,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    # Local apps
+    "users",
+    "properties",
 ]
 
 MIDDLEWARE = [
@@ -127,7 +131,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-from datetime import timedelta
+# Auth model
+AUTH_USER_MODEL = "users.User"
 
 # REST Framework configuration
 REST_FRAMEWORK = {
