@@ -7,3 +7,9 @@ db.sqlite3
 # Test coverage
 .coverage
 htmlcov/
+
+# Media files
+media/
+
+# Celery
+celerybeat-schedule
