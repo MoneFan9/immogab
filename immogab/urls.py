@@ -1,15 +1,15 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from properties.views import PropertyViewSet
+from bookings.views import PropertyViewSet, BookingViewSet
 
 router = DefaultRouter()
-router.register(r'properties', PropertyViewSet, basename='property')
+router.register(r"properties", PropertyViewSet)
+router.register(r"bookings", BookingViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
-    path("api/auth/", include("rest_framework.urls")), # Basic DRF auth for browsable API
 ]
 
 if settings.DEBUG:
