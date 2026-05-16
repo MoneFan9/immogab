@@ -1,5 +1,9 @@
 # Directives Techniques - Projet ImmoGab
 
+> [!IMPORTANT]
+> **ALERTE AUDIT :** Un audit technique complet a été réalisé le 2026-05-16. 
+> Tous les agents (DevOps, ModelMaker, Backend, Security) et le Tech Lead **DOIVENT** consulter le rapport de retour détaillé ici : [docs/AUDIT_RETOUR_AGENTS.md](./AUDIT_RETOUR_AGENTS.md) avant de poursuivre tout travail.
+
 Ce document centralise les instructions du Chef de Projet traduites en spécifications techniques pour les différents agents du projet.
 
 ## 1. Priorités Immédiates (Cycle Prochain)
