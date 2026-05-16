@@ -30,8 +30,20 @@ function App() {
   }, [filters]);
 
   useEffect(() => {
-    fetchProperties();
-    fetchUser();
+    let isMounted = true;
+
+    const init = async () => {
+      if (isMounted) {
+        await fetchProperties();
+        await fetchUser();
+      }
+    };
+
+    init();
+
+    return () => {
+      isMounted = false;
+    };
   }, [fetchProperties, fetchUser]);
 
   return (
@@ -62,28 +74,31 @@ function App() {
               {user && (
                 <button
                   onClick={() => setShowKYC(true)}
-                  className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-extrabold transition-all border shadow-sm ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-black transition-all border-2 shadow-sm hover:scale-105 active:scale-95 ${
                     user.is_kyc_verified
-                      ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 shadow-emerald-100'
                       : user.kyc_document
-                        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300 shadow-amber-100'
+                        : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 hover:border-rose-300 shadow-rose-100'
                   }`}
                 >
                   {user.is_kyc_verified ? (
                     <>
-                      <ShieldCheck size={14} className="text-green-600" />
-                      Compte Certifié
+                      <ShieldCheck size={16} className="text-emerald-600" />
+                      <span className="hidden sm:inline">Compte Certifié</span>
+                      <span className="sm:hidden font-black">OK</span>
                     </>
                   ) : user.kyc_document ? (
                     <>
-                      <ShieldEllipsis size={14} className="text-amber-600" />
-                      En attente
+                      <ShieldEllipsis size={16} className="text-amber-600 animate-pulse" />
+                      <span className="hidden sm:inline">Vérification...</span>
+                      <span className="sm:hidden font-black">WAIT</span>
                     </>
                   ) : (
                     <>
-                      <ShieldAlert size={14} className="text-slate-400" />
-                      Non vérifié
+                      <ShieldAlert size={16} className="text-rose-600" />
+                      <span className="hidden sm:inline">Action KYC Requise</span>
+                      <span className="sm:hidden font-black">KYC</span>
                     </>
                   )}
                 </button>

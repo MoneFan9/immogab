@@ -1,12 +1,27 @@
-import { useState } from 'react';
-import { Upload, CheckCircle, AlertCircle, Clock, FileText, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Upload, CheckCircle, AlertCircle, Clock, FileText, X, ImageIcon, FileCheck } from 'lucide-react';
 import { userService } from '../services/userService';
 
 const KYCVerification = ({ user, onUpdate, onClose }) => {
   const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [cniNumber, setCniNumber] = useState(user?.cni_number || '');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    let url;
+    if (file && file.type.startsWith('image/')) {
+      url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
+    }
+
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [file]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -52,24 +67,24 @@ const KYCVerification = ({ user, onUpdate, onClose }) => {
   const getStatusBadge = () => {
     if (user?.is_kyc_verified) {
       return (
-        <div className="flex items-center gap-2 text-green-700 bg-green-100 border border-green-200 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
-          <CheckCircle size={18} className="text-green-600" />
+        <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm animate-pulse">
+          <CheckCircle size={16} className="text-emerald-600" />
           Compte Certifié (Loi 025/2021)
         </div>
       );
     }
     if (user?.kyc_document) {
       return (
-        <div className="flex items-center gap-2 text-amber-700 bg-amber-100 border border-amber-200 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
-          <Clock size={18} className="text-amber-600" />
-          Vérification en cours...
+        <div className="flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-200 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm">
+          <Clock size={16} className="text-amber-600" />
+          Examen en cours
         </div>
       );
     }
     return (
-      <div className="flex items-center gap-2 text-slate-700 bg-slate-100 border border-slate-200 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
-        <AlertCircle size={18} className="text-slate-500" />
-        Identité non vérifiée
+      <div className="flex items-center gap-2 text-slate-500 bg-slate-50 border border-slate-200 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm">
+        <AlertCircle size={16} className="text-slate-400" />
+        Action requise
       </div>
     );
   };
@@ -136,12 +151,12 @@ const KYCVerification = ({ user, onUpdate, onClose }) => {
                   Téléchargement du document (Recto-Verso)
                 </label>
                 <div
-                  className={`relative border-2 border-dashed rounded-2xl transition-all duration-300 group ${
+                  className={`relative border-2 border-dashed rounded-2xl transition-all duration-300 group overflow-hidden ${
                     file
                       ? 'border-blue-500 bg-blue-50/50'
                       : user?.kyc_document
                         ? 'border-amber-400 bg-amber-50/30'
-                        : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'
+                        : 'border-slate-200 hover:border-blue-500 hover:bg-blue-50/20 hover:shadow-inner'
                   }`}
                 >
                   <input
@@ -154,39 +169,72 @@ const KYCVerification = ({ user, onUpdate, onClose }) => {
 
                   <div className="p-8 text-center">
                     {file ? (
-                      <div className="flex flex-col items-center">
-                        <div className="bg-blue-100 p-4 rounded-2xl mb-3">
-                          <FileText className="text-blue-600" size={32} />
+                      <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {previewUrl ? (
+                          <div className="relative mb-4">
+                            <img src={previewUrl} alt="Preview" className="w-32 h-32 object-cover rounded-xl shadow-md border-2 border-white" />
+                            <div className="absolute -top-2 -right-2 bg-blue-600 text-white p-1 rounded-full shadow-lg">
+                              <ImageIcon size={16} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-blue-100 p-5 rounded-2xl mb-4 shadow-sm">
+                            <FileText className="text-blue-600" size={40} />
+                          </div>
+                        )}
+                        <span className="text-slate-900 font-extrabold truncate max-w-xs">{file.name}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-slate-500 text-[10px] uppercase font-black tracking-widest bg-white px-2 py-0.5 rounded border border-slate-100">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                          <span className="text-blue-600 text-[10px] uppercase font-black tracking-widest bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                            {file.type.split('/')[1] || 'FILE'}
+                          </span>
                         </div>
-                        <span className="text-slate-900 font-bold truncate max-w-xs">{file.name}</span>
-                        <span className="text-slate-500 text-xs mt-1 uppercase font-semibold">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type.split('/')[1]}
-                        </span>
                         <button
                           type="button"
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); }}
-                          className="mt-4 px-4 py-1.5 text-xs text-red-600 font-bold bg-red-50 rounded-full hover:bg-red-100 transition-colors z-20 relative"
+                          className="mt-6 px-6 py-2 text-xs text-red-600 font-black uppercase tracking-widest bg-red-50 rounded-xl hover:bg-red-100 transition-all border border-red-100 hover:shadow-sm z-20 relative"
                         >
-                          Changer le fichier
+                          Changer le document
                         </button>
                       </div>
                     ) : user?.kyc_document ? (
                       <div className="flex flex-col items-center">
-                        <div className="bg-amber-100 p-4 rounded-2xl mb-3">
-                          <Clock className="text-amber-600" size={32} />
+                        <div className="bg-amber-100 p-5 rounded-2xl mb-4 shadow-sm">
+                          <Clock className="text-amber-600" size={40} />
                         </div>
-                        <span className="text-slate-900 font-bold">Document en cours d'examen</span>
-                        <span className="text-amber-600 text-xs mt-1 font-semibold italic">
-                          Cliquez pour mettre à jour
+                        <span className="text-slate-900 font-extrabold">Document en cours d'examen</span>
+                        <p className="text-slate-500 text-xs mt-2 max-w-[200px] leading-relaxed">
+                          Votre dossier est déjà dans notre file d'attente. Vous pouvez le remplacer si besoin.
+                        </p>
+                        <span className="mt-4 px-4 py-1.5 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-full">
+                          Cliquer pour modifier
                         </span>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center group-hover:transform group-hover:scale-105 transition-transform">
-                        <div className="bg-slate-100 p-4 rounded-2xl mb-3 group-hover:bg-blue-100 transition-colors">
-                          <Upload className="text-slate-400 group-hover:text-blue-600" size={32} />
+                      <div className="flex flex-col items-center group-hover:transform group-hover:scale-105 transition-all duration-500">
+                        <div className="bg-slate-100 p-5 rounded-2xl mb-4 group-hover:bg-blue-600 transition-colors shadow-sm">
+                          <Upload className="text-slate-400 group-hover:text-white" size={40} />
                         </div>
-                        <span className="text-slate-900 font-bold">Glissez ou cliquez pour uploader</span>
-                        <span className="text-slate-500 text-sm mt-1">PNG, JPG ou PDF (Max 5 Mo)</span>
+                        <span className="text-slate-900 font-extrabold text-lg">Déposez votre pièce d'identité</span>
+                        <p className="text-slate-500 text-sm mt-1 max-w-[240px]">
+                          Glissez-déposez ou <span className="text-blue-600 font-bold">parcourez vos fichiers</span>
+                        </p>
+                        <div className="flex gap-4 mt-6">
+                            <div className="flex items-center gap-1.5 text-slate-400">
+                                <ImageIcon size={14} />
+                                <span className="text-[10px] font-bold uppercase tracking-tight">JPG/PNG</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-slate-400">
+                                <FileText size={14} />
+                                <span className="text-[10px] font-bold uppercase tracking-tight">PDF</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-slate-400">
+                                <FileCheck size={14} />
+                                <span className="text-[10px] font-bold uppercase tracking-tight">MAX 5MO</span>
+                            </div>
+                        </div>
                       </div>
                     )}
                   </div>
