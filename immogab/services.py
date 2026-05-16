@@ -17,11 +17,8 @@ def validate_kyc(user):
         raise ValueError("ID card is required for KYC")
 
     user.is_kyc_verified = True
-
-    # Persist if it's a model instance
     if hasattr(user, 'save'):
         user.save()
-
     return True
 
 def check_booking_overlap(new_start, new_end, existing_bookings):
@@ -146,7 +143,7 @@ def call_jeedom_webhook(api_url, command, api_key):
             try:
                 data = response.json()
             except ValueError:
-                raise ConnectionError("Jeedom connection failed: Malformed JSON response")
+                raise ConnectionError("Jeedom returned an invalid JSON response")
 
             if "error" in data:
                 raise RuntimeError(f"Jeedom RPC error: {data['error'].get('message', 'Unknown error')}")
