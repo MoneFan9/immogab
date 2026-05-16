@@ -51,7 +51,12 @@ INSTALLED_APPS = [
     # Local apps
     "users",
     "properties",
+    "bookings",
+    "escrow",
+    "payments",
 ]
+
+AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
