@@ -3,7 +3,8 @@ import uuid
 from datetime import datetime
 from abc import ABC, abstractmethod
 from unittest.mock import MagicMock
-from payments.interfaces import PaymentGateway as ModularPaymentGateway
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # --- KYC and Booking Logic ---
 
@@ -93,7 +94,8 @@ class ModularPaymentAdapter(PaymentGateway):
 def call_jeedom_webhook(api_url, command, api_key):
     """
     Calls the Jeedom API to execute a command (e.g., smart lock).
-    Uses JSON-RPC 2.0 protocol.
+    Uses JSON-RPC 2.0 protocol with robust retry logic and timeout management.
+    Optimized for local network IoT boxes.
     """
     payload = {
         "jsonrpc": "2.0",
@@ -105,27 +107,50 @@ def call_jeedom_webhook(api_url, command, api_key):
         "id": 1
     }
 
-    try:
-        response = requests.post(
-            api_url,
-            json=payload,
-            timeout=5
-        )
+    # Robust Retry Strategy for IoT:
+    # - total=3: Up to 3 retries (4 attempts total)
+    # - backoff_factor=0.3: Wait 0.3s, 0.6s, 1.2s between retries
+    # - status_forcelist: Retry on common transient server errors
+    # - allowed_methods: Jeedom API uses POST for all RPC calls
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=0.3,
+        status_forcelist=[500, 502, 503, 504],
+        allowed_methods=["POST"],
+        raise_on_status=True,  # Mandatory to trigger retries on status_forcelist
+        connect=3,
+        read=3
+    )
 
-        if response.status_code == 200:
-            # Additional check for JSON-RPC error in 200 response
-            data = response.json()
-            if "error" in data:
-                raise RuntimeError(f"Jeedom RPC error: {data['error'].get('message', 'Unknown error')}")
-            return True
-        elif response.status_code == 401:
-            raise PermissionError("Jeedom authentication failed")
-        elif response.status_code >= 500:
-            raise RuntimeError("Jeedom server error")
-        else:
-            raise RuntimeError(f"Jeedom error: {response.status_code}")
+    adapter = HTTPAdapter(max_retries=retry_strategy)
 
-    except requests.exceptions.Timeout:
-        raise ConnectionError("Jeedom connection timed out")
-    except requests.exceptions.RequestException as e:
-        raise ConnectionError(f"Jeedom connection failed: {str(e)}")
+    with requests.Session() as session:
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
+        try:
+            response = session.post(
+                api_url,
+                json=payload,
+                timeout=5  # 5 seconds timeout per attempt
+            )
+
+            if response.status_code == 200:
+                # Additional check for JSON-RPC error in 200 response
+                data = response.json()
+                if "error" in data:
+                    raise RuntimeError(f"Jeedom RPC error: {data['error'].get('message', 'Unknown error')}")
+                return True
+            elif response.status_code == 401:
+                raise PermissionError("Jeedom authentication failed")
+            elif response.status_code >= 500:
+                raise RuntimeError("Jeedom server error")
+            else:
+                raise RuntimeError(f"Jeedom error: {response.status_code}")
+
+        except requests.exceptions.Timeout:
+            raise ConnectionError("Jeedom connection timed out")
+        except requests.exceptions.ConnectionError:
+            raise ConnectionError("Jeedom connection failed after multiple attempts (timeout/network)")
+        except requests.exceptions.RequestException as e:
+            raise ConnectionError(f"Jeedom connection failed: {str(e)}")

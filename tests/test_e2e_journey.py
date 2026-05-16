@@ -24,8 +24,7 @@ def mock_property():
     prop.hourly_rate = 5000
     return prop
 
-@pytest.mark.django_db
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_e2e_journey_success(mock_post, mock_user, mock_property):
     # 1. Search for a house in Libreville
     from properties.models import Property
@@ -77,6 +76,7 @@ def test_e2e_journey_success(mock_post, mock_user, mock_property):
     assert jeedom_result is True
 
     # Check if the signal sent followed JSON-RPC 2.0
+    # Note: requests.Session.post is called inside call_jeedom_webhook
     args, kwargs = mock_post.call_args
     sent_json = kwargs["json"]
     assert sent_json["jsonrpc"] == "2.0"
