@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, Search, User, Menu, LayoutDashboard, SwitchCamera } from 'lucide-react';
+import { Home, Search, User, Menu, LayoutDashboard, SwitchCamera, ShieldCheck, ShieldAlert, ShieldEllipsis } from 'lucide-react';
 import { propertyService } from './services/propertyService';
+import { userService } from './services/userService';
 import SearchBar from './components/SearchBar';
 import PropertyCard from './components/PropertyCard';
 import PropertyDetails from './components/PropertyDetails';
 import HostDashboard from './components/HostDashboard';
+import KYCVerification from './components/KYCVerification';
 
 function App() {
   const [view, setView] = useState('guest'); // 'guest' or 'host'
@@ -12,6 +14,13 @@ function App() {
   const [filters, setFilters] = useState({ query: '', province: '', property_type: '' });
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [showKYC, setShowKYC] = useState(false);
+
+  const fetchUser = useCallback(async () => {
+    const userData = await userService.getUserProfile();
+    setUser(userData);
+  }, []);
 
   const fetchProperties = useCallback(async () => {
     setLoading(true);
@@ -22,7 +31,8 @@ function App() {
 
   useEffect(() => {
     fetchProperties();
-  }, [fetchProperties]);
+    fetchUser();
+  }, [fetchProperties, fetchUser]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -49,6 +59,35 @@ function App() {
             </div>
 
             <div className="flex items-center gap-4">
+              {user && (
+                <button
+                  onClick={() => setShowKYC(true)}
+                  className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-extrabold transition-all border shadow-sm ${
+                    user.is_kyc_verified
+                      ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300'
+                      : user.kyc_document
+                        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                  }`}
+                >
+                  {user.is_kyc_verified ? (
+                    <>
+                      <ShieldCheck size={14} className="text-green-600" />
+                      Compte Certifié
+                    </>
+                  ) : user.kyc_document ? (
+                    <>
+                      <ShieldEllipsis size={14} className="text-amber-600" />
+                      En attente
+                    </>
+                  ) : (
+                    <>
+                      <ShieldAlert size={14} className="text-slate-400" />
+                      Non vérifié
+                    </>
+                  )}
+                </button>
+              )}
               <button
                 onClick={() => setView(view === 'guest' ? 'host' : 'guest')}
                 className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-all shadow-sm"
@@ -163,6 +202,21 @@ function App() {
           property={selectedProperty}
           onClose={() => setSelectedProperty(null)}
         />
+      )}
+
+      {/* KYC Modal */}
+      {showKYC && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <KYCVerification
+              user={user}
+              onUpdate={(updatedUser) => {
+                setUser(updatedUser);
+              }}
+              onClose={() => setShowKYC(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

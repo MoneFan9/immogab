@@ -6,15 +6,6 @@ const IncomeHistory = () => {
   const [history, setHistory] = useState([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, thisMonth: 0 });
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
-
-  const handleExport = () => {
-    setExporting(true);
-    setTimeout(() => {
-      setExporting(false);
-      alert('Historique exporté avec succès (CSV)');
-    }, 1500);
-  };
 
   const fetchIncome = useCallback(async () => {
     setLoading(true);
@@ -79,13 +70,8 @@ const IncomeHistory = () => {
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="font-bold text-gray-900">Dernières Transactions</h3>
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="flex items-center gap-2 text-sm text-blue-600 font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-          >
-            <Download size={16} className={exporting ? 'animate-bounce' : ''} />
-            {exporting ? 'Exportation...' : 'Exporter'}
+          <button className="flex items-center gap-2 text-sm text-blue-600 font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+            <Download size={16} /> Exporter
           </button>
         </div>
         <div className="overflow-x-auto">

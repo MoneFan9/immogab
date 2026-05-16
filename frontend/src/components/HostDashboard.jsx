@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PlusCircle, Home, Settings, TrendingUp, DollarSign, Users } from 'lucide-react';
+import { PlusCircle, Home, Settings } from 'lucide-react';
 import AddPropertyForm from './AddPropertyForm';
 import IncomeHistory from './IncomeHistory';
 import { hostService } from '../services/hostService';
@@ -7,18 +7,13 @@ import { hostService } from '../services/hostService';
 const HostDashboard = () => {
   const [activeTab, setActiveTab] = useState('properties');
   const [properties, setProperties] = useState([]);
-  const [stats, setStats] = useState({ total: 0, pending: 0, thisMonth: 0 });
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
 
   const fetchHostData = useCallback(async () => {
     setLoading(true);
-    const [propData, incomeData] = await Promise.all([
-      hostService.getHostProperties(),
-      hostService.getIncomeHistory()
-    ]);
-    setProperties(propData);
-    setStats(incomeData.stats);
+    const data = await hostService.getHostProperties();
+    setProperties(data);
     setLoading(false);
   }, []);
 
@@ -66,32 +61,7 @@ const HostDashboard = () => {
       </div>
 
       {activeTab === 'properties' && (
-        <div className="space-y-8">
-          {/* Quick Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-xl text-white shadow-md">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-blue-100 text-sm font-medium">Revenus Totaux</span>
-                <DollarSign size={20} className="text-blue-200" />
-              </div>
-              <div className="text-2xl font-bold">{stats.total.toLocaleString()} FCFA</div>
-            </div>
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-500 text-sm font-medium">Biens Actifs</span>
-                <Home size={20} className="text-blue-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{properties.length}</div>
-            </div>
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-500 text-sm font-medium">Performance</span>
-                <TrendingUp size={20} className="text-green-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">+12%</div>
-            </div>
-          </div>
-
+        <div>
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2].map(i => (

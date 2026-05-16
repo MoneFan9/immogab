@@ -16,13 +16,6 @@ const AddPropertyForm = ({ onClose, onSuccess }) => {
     jeedom_ip: '',
   });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  const validateIP = (ip) => {
-    if (!ip) return true;
-    const regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    return regex.test(ip);
-  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -34,18 +27,6 @@ const AddPropertyForm = ({ onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newErrors = {};
-
-    if (formData.jeedom_ip && !validateIP(formData.jeedom_ip)) {
-      newErrors.jeedom_ip = "Format d'adresse IP invalide (ex: 192.168.1.50)";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setErrors({});
     setLoading(true);
 
     // Simulate API call
@@ -66,136 +47,89 @@ const AddPropertyForm = ({ onClose, onSuccess }) => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
-          {/* Section 1: Informations Générales */}
-          <div className="col-span-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Info className="text-blue-600" size={20} />
-              Informations Générales
-            </h3>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Titre de l'annonce</label>
-                <input
-                  type="text"
-                  name="title"
-                  required
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Ex: Belle Villa avec Piscine à Angondjé"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  name="description"
-                  required
-                  rows={3}
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Décrivez votre bien en quelques lignes..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="space-y-2 w-full md:w-1/2">
-                <label className="block text-sm font-medium text-gray-700">Type de bien</label>
-                <select
-                  name="property_type"
-                  value={formData.property_type}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="MAISON">Maison</option>
-                  <option value="APPARTEMENT">Appartement</option>
-                  <option value="TERRAIN">Terrain</option>
-                  <option value="ESPACE_EVENEMENTIEL">Espace Événementiel</option>
-                </select>
-              </div>
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4 col-span-full">
+            <label className="block text-sm font-medium text-gray-700">Titre de l'annonce</label>
+            <input
+              type="text"
+              name="title"
+              required
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="Ex: Belle Villa avec Piscine à Angondjé"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
-          {/* Section 2: Localisation */}
-          <div className="col-span-full border-t border-gray-100 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Localisation</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Province</label>
-                <select
-                  name="province"
-                  value={formData.province}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="ESTUAIRE">Estuaire</option>
-                  <option value="HAUT-OGOOUÉ">Haut-Ogooué</option>
-                  <option value="MOYEN-OGOOUÉ">Moyen-Ogooué</option>
-                  <option value="NGOUNIÉ">Ngounié</option>
-                  <option value="NYANGA">Nyanga</option>
-                  <option value="OGOOUÉ-IVINDO">Ogooué-Ivindo</option>
-                  <option value="OGOOUÉ-LOLO">Ogooué-Lolo</option>
-                  <option value="OGOOUÉ-MARITIME">Ogooué-Maritime</option>
-                  <option value="WOLEU-NTEM">Woleu-Ntem</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Ville</label>
-                <input
-                  type="text"
-                  name="city"
-                  required
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="Ex: Libreville"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Quartier</label>
-                <input
-                  type="text"
-                  name="neighborhood"
-                  required
-                  value={formData.neighborhood}
-                  onChange={handleChange}
-                  placeholder="Ex: Sablière"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+          <div className="space-y-4 col-span-full">
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              name="description"
+              required
+              rows={4}
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Décrivez votre bien en quelques lignes..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
-          {/* Section 3: Tarification */}
-          <div className="col-span-full border-t border-gray-100 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tarification</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Prix par jour (FCFA)</label>
-                <input
-                  type="number"
-                  name="price_per_day"
-                  value={formData.price_per_day}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-700">Type de bien</label>
+            <select
+              name="property_type"
+              value={formData.property_type}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="MAISON">Maison</option>
+              <option value="APPARTEMENT">Appartement</option>
+              <option value="TERRAIN">Terrain</option>
+              <option value="ESPACE_EVENEMENTIEL">Espace Événementiel</option>
+            </select>
+          </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Prix par heure (FCFA)</label>
-                <input
-                  type="number"
-                  name="price_per_hour"
-                  value={formData.price_per_hour}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-700">Province</label>
+            <select
+              name="province"
+              value={formData.province}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="ESTUAIRE">Estuaire</option>
+              <option value="HAUT-OGOOUÉ">Haut-Ogooué</option>
+              <option value="MOYEN-OGOOUÉ">Moyen-Ogooué</option>
+              <option value="NGOUNIÉ">Ngounié</option>
+              <option value="NYANGA">Nyanga</option>
+              <option value="OGOOUÉ-IVINDO">Ogooué-Ivindo</option>
+              <option value="OGOOUÉ-LOLO">Ogooué-Lolo</option>
+              <option value="OGOOUÉ-MARITIME">Ogooué-Maritime</option>
+              <option value="WOLEU-NTEM">Woleu-Ntem</option>
+            </select>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-700">Prix par jour (FCFA)</label>
+            <input
+              type="number"
+              name="price_per_day"
+              value={formData.price_per_day}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-700">Prix par heure (FCFA)</label>
+            <input
+              type="number"
+              name="price_per_hour"
+              value={formData.price_per_hour}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
           <div className="col-span-full border-t border-gray-100 pt-6">
@@ -239,13 +173,8 @@ const AddPropertyForm = ({ onClose, onSuccess }) => {
                 value={formData.jeedom_ip}
                 onChange={handleChange}
                 placeholder="Ex: 192.168.1.50"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.jeedom_ip ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                }`}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              {errors.jeedom_ip && (
-                <p className="text-red-500 text-xs mt-1 font-medium">{errors.jeedom_ip}</p>
-              )}
               <p className="text-xs text-gray-500">
                 L'IP permet de synchroniser les accès temporaires via vos serrures connectées.
               </p>
