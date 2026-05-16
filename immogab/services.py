@@ -94,8 +94,7 @@ class ModularPaymentAdapter(PaymentGateway):
 def call_jeedom_webhook(api_url, command, api_key):
     """
     Calls the Jeedom API to execute a command (e.g., smart lock).
-    Uses JSON-RPC 2.0 protocol with robust retry logic and timeout management.
-    Optimized for local network IoT boxes.
+    Uses JSON-RPC 2.0 protocol with a robust retry strategy for local IoT networks.
     """
     payload = {
         "jsonrpc": "2.0",
@@ -107,50 +106,89 @@ def call_jeedom_webhook(api_url, command, api_key):
         "id": 1
     }
 
-    # Robust Retry Strategy for IoT:
-    # - total=3: Up to 3 retries (4 attempts total)
-    # - backoff_factor=0.3: Wait 0.3s, 0.6s, 1.2s between retries
-    # - status_forcelist: Retry on common transient server errors
-    # - allowed_methods: Jeedom API uses POST for all RPC calls
+    # Robust Retry Strategy for local IoT networks (packet loss, transient failures)
     retry_strategy = Retry(
-        total=3,
+        total=3,  # 3 retries means 4 total attempts
         backoff_factor=0.3,
         status_forcelist=[500, 502, 503, 504],
         allowed_methods=["POST"],
-        raise_on_status=True,  # Mandatory to trigger retries on status_forcelist
-        connect=3,
-        read=3
+        raise_on_status=True
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session = requests.Session()
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+    try:
+        response = session.post(
+            api_url,
+            json=payload,
+            timeout=5 # 5s per-attempt timeout
+        )
+
+        if response.status_code == 200:
+            # Additional check for JSON-RPC error in 200 response
+            data = response.json()
+            if "error" in data:
+                raise RuntimeError(f"Jeedom RPC error: {data['error'].get('message', 'Unknown error')}")
+            return True
+        elif response.status_code == 401:
+            raise PermissionError("Jeedom authentication failed")
+        elif response.status_code >= 500:
+            raise RuntimeError("Jeedom server error")
+        else:
+            raise RuntimeError(f"Jeedom error: {response.status_code}")
+
+    except requests.exceptions.Timeout:
+        raise ConnectionError("Jeedom connection timed out")
+    except requests.exceptions.RequestException as e:
+        raise ConnectionError(f"Jeedom connection failed: {str(e)}")
+
+# --- Booking-IoT Integration ---
+
+def schedule_booking_lock_commands(booking):
+    """
+    Schedules 'Unlock' at the start of the booking and 'Lock' at the end.
+    Expects booking to have:
+    - start_time, end_time (datetime)
+    - property with jeedom_api_url, jeedom_api_key, unlock_command_id, lock_command_id
+    Returns a dict containing the task IDs for potential revocation.
+    """
+    from .tasks import send_jeedom_command
+
+    # 1. Schedule UNLOCK
+    unlock_task = send_jeedom_command.apply_async(
+        args=[
+            booking.property.jeedom_api_url,
+            booking.property.unlock_command_id,
+            booking.property.jeedom_api_key
+        ],
+        eta=booking.start_time
     )
 
-    adapter = HTTPAdapter(max_retries=retry_strategy)
+    # 2. Schedule LOCK
+    lock_task = send_jeedom_command.apply_async(
+        args=[
+            booking.property.jeedom_api_url,
+            booking.property.lock_command_id,
+            booking.property.jeedom_api_key
+        ],
+        eta=booking.end_time
+    )
 
-    with requests.Session() as session:
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
+    return {
+        "unlock_task_id": unlock_task.id,
+        "lock_task_id": lock_task.id
+    }
 
-        try:
-            response = session.post(
-                api_url,
-                json=payload,
-                timeout=5  # 5 seconds timeout per attempt
-            )
+def confirm_booking(booking):
+    """
+    Confirms a booking and triggers the IoT lock scheduling.
+    In a real app, this would also update the booking status in the DB.
+    """
+    booking.status = "CONFIRMED"
 
-            if response.status_code == 200:
-                # Additional check for JSON-RPC error in 200 response
-                data = response.json()
-                if "error" in data:
-                    raise RuntimeError(f"Jeedom RPC error: {data['error'].get('message', 'Unknown error')}")
-                return True
-            elif response.status_code == 401:
-                raise PermissionError("Jeedom authentication failed")
-            elif response.status_code >= 500:
-                raise RuntimeError("Jeedom server error")
-            else:
-                raise RuntimeError(f"Jeedom error: {response.status_code}")
+    # Trigger IoT scheduling
+    schedule_booking_lock_commands(booking)
 
-        except requests.exceptions.Timeout:
-            raise ConnectionError("Jeedom connection timed out")
-        except requests.exceptions.ConnectionError:
-            raise ConnectionError("Jeedom connection failed after multiple attempts (timeout/network)")
-        except requests.exceptions.RequestException as e:
-            raise ConnectionError(f"Jeedom connection failed: {str(e)}")
+    return True

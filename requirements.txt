@@ -10,4 +10,3 @@ pytest-mock
 pytest-cov
 celery
 redis
-django-redis
