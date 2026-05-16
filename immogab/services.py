@@ -3,6 +3,8 @@ import uuid
 from datetime import datetime
 from abc import ABC, abstractmethod
 from unittest.mock import MagicMock
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # --- KYC and Booking Logic ---
 
@@ -84,7 +86,7 @@ class MockPaymentGateway(PaymentGateway):
 def call_jeedom_webhook(api_url, command, api_key):
     """
     Calls the Jeedom API to execute a command (e.g., smart lock).
-    Uses JSON-RPC 2.0 protocol.
+    Uses JSON-RPC 2.0 protocol with a robust retry strategy for local IoT networks.
     """
     payload = {
         "jsonrpc": "2.0",
@@ -96,11 +98,24 @@ def call_jeedom_webhook(api_url, command, api_key):
         "id": 1
     }
 
+    # Robust Retry Strategy for local IoT networks (packet loss, transient failures)
+    retry_strategy = Retry(
+        total=3,  # 3 retries means 4 total attempts
+        backoff_factor=0.3,
+        status_forcelist=[500, 502, 503, 504],
+        allowed_methods=["POST"],
+        raise_on_status=True
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session = requests.Session()
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
     try:
-        response = requests.post(
+        response = session.post(
             api_url,
             json=payload,
-            timeout=5
+            timeout=5 # 5s per-attempt timeout
         )
 
         if response.status_code == 200:
@@ -120,3 +135,52 @@ def call_jeedom_webhook(api_url, command, api_key):
         raise ConnectionError("Jeedom connection timed out")
     except requests.exceptions.RequestException as e:
         raise ConnectionError(f"Jeedom connection failed: {str(e)}")
+
+# --- Booking-IoT Integration ---
+
+def schedule_booking_lock_commands(booking):
+    """
+    Schedules 'Unlock' at the start of the booking and 'Lock' at the end.
+    Expects booking to have:
+    - start_time, end_time (datetime)
+    - property with jeedom_api_url, jeedom_api_key, unlock_command_id, lock_command_id
+    Returns a dict containing the task IDs for potential revocation.
+    """
+    from .tasks import send_jeedom_command
+
+    # 1. Schedule UNLOCK
+    unlock_task = send_jeedom_command.apply_async(
+        args=[
+            booking.property.jeedom_api_url,
+            booking.property.unlock_command_id,
+            booking.property.jeedom_api_key
+        ],
+        eta=booking.start_time
+    )
+
+    # 2. Schedule LOCK
+    lock_task = send_jeedom_command.apply_async(
+        args=[
+            booking.property.jeedom_api_url,
+            booking.property.lock_command_id,
+            booking.property.jeedom_api_key
+        ],
+        eta=booking.end_time
+    )
+
+    return {
+        "unlock_task_id": unlock_task.id,
+        "lock_task_id": lock_task.id
+    }
+
+def confirm_booking(booking):
+    """
+    Confirms a booking and triggers the IoT lock scheduling.
+    In a real app, this would also update the booking status in the DB.
+    """
+    booking.status = "CONFIRMED"
+
+    # Trigger IoT scheduling
+    schedule_booking_lock_commands(booking)
+
+    return True

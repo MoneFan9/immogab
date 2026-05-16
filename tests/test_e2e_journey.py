@@ -24,7 +24,7 @@ def mock_property():
     prop.hourly_rate = 5000
     return prop
 
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_e2e_journey_success(mock_post, mock_user, mock_property):
     # 1. Search for a house in Libreville
     # We expect a search_properties function to exist
