@@ -24,15 +24,25 @@ def mock_property():
     prop.hourly_rate = 5000
     return prop
 
+@pytest.mark.django_db
 @patch("requests.post")
 def test_e2e_journey_success(mock_post, mock_user, mock_property):
     # 1. Search for a house in Libreville
+    from properties.models import Property
+    Property.objects.create(
+        title="Villa à Libreville",
+        description="Une belle villa",
+        property_type="MAISON",
+        province="Estuaire",
+        city="Libreville",
+        neighborhood="Sablière"
+    )
     # We expect a search_properties function to exist
     from immogab.services import search_properties
     properties = search_properties(query="Libreville")
-    assert any(p.location == "Libreville" for p in properties)
+    assert any(p.city == "Libreville" for p in properties)
 
-    target_property = [p for p in properties if p.location == "Libreville"][0]
+    target_property = [p for p in properties if p.city == "Libreville"][0]
 
     # 2. KYC Validation
     assert validate_kyc(mock_user) is True

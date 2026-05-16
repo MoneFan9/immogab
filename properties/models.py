@@ -2,49 +2,50 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 class Property(models.Model):
-    """
-    Property model for ImmoGab.
-    Includes property type, pricing (hourly/daily), and Gabonese geolocation.
-    """
-    PROPERTY_TYPES = [
-        ('MAISON', _('Maison')),
-        ('APPARTEMENT', _('Appartement')),
-        ('TERRAIN', _('Terrain')),
-        ('ESPACE_EVENEMENTIEL', _('Espace Événementiel')),
-    ]
+    class PropertyType(models.TextChoices):
+        MAISON = 'MAISON', _('Maison')
+        APPARTEMENT = 'APPARTEMENT', _('Appartement')
+        TERRAIN = 'TERRAIN', _('Terrain')
+        ESPACE_EVENEMENTIEL = 'ESPACE_EVENEMENTIEL', _('Espace Événementiel')
 
-    PROVINCES = [
-        ('ESTUAIRE', _('Estuaire')),
-        ('HAUT_OGOOUE', _('Haut-Ogooué')),
-        ('MOYEN_OGOOUE', _('Moyen-Ogooué')),
-        ('NGOUNIE', _('Ngounié')),
-        ('NYANGA', _('Nyanga')),
-        ('OGOOUE_IVINDO', _('Ogooué-Ivindo')),
-        ('OGOOUE_LOLO', _('Ogooué-Lolo')),
-        ('OGOOUE_MARITIME', _('Ogooué-Maritime')),
-        ('WOLEU_NTEM', _('Woleu-Ntem')),
-    ]
+    class Province(models.TextChoices):
+        ESTUAIRE = 'Estuaire', _('Estuaire')
+        HAUT_OGOOUE = 'Haut-Ogooué', _('Haut-Ogooué')
+        MOYEN_OGOOUE = 'Moyen-Ogooué', _('Moyen-Ogooué')
+        NGOUNIE = 'Ngounié', _('Ngounié')
+        NYANGA = 'Nyanga', _('Nyanga')
+        OGOOUE_IVINDO = 'Ogooué-Ivindo', _('Ogooué-Ivindo')
+        OGOOUE_LOLO = 'Ogooué-Lolo', _('Ogooué-Lolo')
+        OGOOUE_MARITIME = 'Ogooué-Maritime', _('Ogooué-Maritime')
+        WOLEU_NTEM = 'Woleu-Ntem', _('Woleu-Ntem')
 
-    title = models.CharField(max_length=255, verbose_name=_("Titre"))
-    description = models.TextField(verbose_name=_("Description"))
-    property_type = models.CharField(max_length=50, choices=PROPERTY_TYPES, default='APPARTEMENT', verbose_name=_("Type de bien"))
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    property_type = models.CharField(
+        max_length=50,
+        choices=PropertyType.choices,
+        db_index=True
+    )
+    price_per_hour = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_index=True)
+    price_per_day = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_index=True)
 
-    price_per_hour = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("Prix par heure"))
-    price_per_day = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("Prix par jour"))
+    province = models.CharField(
+        max_length=50,
+        choices=Province.choices,
+        db_index=True
+    )
+    city = models.CharField(max_length=100)
+    neighborhood = models.CharField(max_length=100)
 
-    # Geolocation
-    province = models.CharField(max_length=50, choices=PROVINCES, verbose_name=_("Province"))
-    city = models.CharField(max_length=100, verbose_name=_("Ville"))
-    neighborhood = models.CharField(max_length=100, verbose_name=_("Quartier"))
-    latitude = models.FloatField(null=True, blank=True, verbose_name=_("Latitude"))
-    longitude = models.FloatField(null=True, blank=True, verbose_name=_("Longitude"))
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = _('Propriété')
+        verbose_name_plural = _('Propriétés')
+
     def __str__(self):
         return self.title
-
-    class Meta:
-        verbose_name = _("Propriété")
-        verbose_name_plural = _("Propriétés")
