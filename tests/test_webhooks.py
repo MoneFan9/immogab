@@ -79,3 +79,29 @@ def test_jeedom_webhook_request_exception(mock_post):
 
     with pytest.raises(ConnectionError, match="Jeedom connection failed: Network fail"):
         call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+def test_verify_retry_config():
+    """
+    Verify that the session is correctly configured with retries.
+    """
+    with patch("requests.Session.mount") as mock_mount, \
+         patch("requests.Session.post") as mock_post:
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"jsonrpc": "2.0", "result": "success", "id": 1}
+        mock_post.return_value = mock_response
+
+        call_jeedom_webhook("http://jeedom.local/api", "lock_cmd", "key")
+
+        # Check that mount was called for http and https
+        mount_calls = {call.args[0]: call.args[1] for call in mock_mount.call_args_list}
+        assert "http://" in mount_calls
+        assert "https://" in mount_calls
+
+        adapter = mount_calls["http://"]
+        retry = adapter.max_retries
+        assert retry.total == 3
+        assert retry.backoff_factor == 0.3
+        assert set([500, 502, 503, 504]).issubset(set(retry.status_forcelist))
+        assert retry.raise_on_status is True
