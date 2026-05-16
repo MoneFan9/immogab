@@ -2,8 +2,11 @@ djangorestframework
 python-dotenv
 django-cors-headers
 djangorestframework-simplejwt
+django-filter
 requests
 pytest
 pytest-django
 pytest-mock
 pytest-cov
+celery
+redis
