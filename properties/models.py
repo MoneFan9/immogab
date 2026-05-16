@@ -2,43 +2,40 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 class Property(models.Model):
-    class PropertyType(models.TextChoices):
-        TERRAIN = "TERRAIN", _("Terrain")
-        MAISON = "MAISON", _("Maison")
-        APPARTEMENT = "APPARTEMENT", _("Appartement")
-        ESPACE_EVENEMENTIEL = "ESPACE_EVENEMENTIEL", _("Espace Événementiel")
+    PROVINCE_CHOICES = [
+        ('estuaire', 'Estuaire'),
+        ('haut_ogooue', 'Haut-Ogooué'),
+        ('moyen_ogooue', 'Moyen-Ogooué'),
+        ('ngounie', 'Ngounié'),
+        ('nyanga', 'Nyanga'),
+        ('ogooue_ivindo', 'Ogooué-Ivindo'),
+        ('ogooue_lolo', 'Ogooué-Lolo'),
+        ('ogooue_maritime', 'Ogooué-Maritime'),
+        ('woleu_ntem', 'Woleu-Ntem'),
+    ]
 
-    class Province(models.TextChoices):
-        ESTUAIRE = "ESTUAIRE", _("Estuaire")
-        HAUT_OGOOUE = "HAUT_OGOOUE", _("Haut-Ogooué")
-        MOYEN_OGOOUE = "MOYEN_OGOOUE", _("Moyen-Ogooué")
-        NGOUNIE = "NGOUNIE", _("Ngounié")
-        NYANGA = "NYANGA", _("Nyanga")
-        OGO_IVINDO = "OGO_IVINDO", _("Ogooué-Ivindo")
-        OGO_LOLO = "OGO_LOLO", _("Ogooué-Lolo")
-        OGO_MARITIME = "OGO_MARITIME", _("Ogooué-Maritime")
-        WOLEU_NTEM = "WOLEU_NTEM", _("Woleu-Ntem")
+    TYPE_CHOICES = [
+        ('terrain', 'Terrain'),
+        ('maison', 'Maison'),
+        ('appartement', 'Appartement'),
+        ('espace_evenementiel', 'Espace Événementiel'),
+    ]
 
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    property_type = models.CharField(
-        max_length=20,
-        choices=PropertyType.choices,
-        default=PropertyType.APPARTEMENT
-    )
-    province = models.CharField(
-        max_length=20,
-        choices=Province.choices,
-        default=Province.ESTUAIRE
-    )
-    city = models.CharField(max_length=100)
-    neighborhood = models.CharField(max_length=100)
+    title = models.CharField(_("Titre"), max_length=255)
+    description = models.TextField(_("Description"))
+    property_type = models.CharField(_("Type de bien"), max_length=50, choices=TYPE_CHOICES, db_index=True)
+    province = models.CharField(_("Province"), max_length=50, choices=PROVINCE_CHOICES, db_index=True)
+    city = models.CharField(_("Ville"), max_length=100)
+    neighborhood = models.CharField(_("Quartier"), max_length=100)
 
-    price_per_hour = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    price_per_day = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    price_per_hour = models.DecimalField(_("Prix par heure"), max_digits=10, decimal_places=0, null=True, blank=True, db_index=True)
+    price_per_day = models.DecimalField(_("Prix par jour"), max_digits=10, decimal_places=0, null=True, blank=True, db_index=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = _("Propriété")
+        verbose_name_plural = _("Propriétés")
 
     def __str__(self):
         return self.title
