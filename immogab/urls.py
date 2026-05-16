@@ -17,7 +17,9 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
+from payments.views import payment_webhook
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/payments/webhook/<str:provider>/", payment_webhook, name="payment-webhook"),
 ]

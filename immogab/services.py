@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from abc import ABC, abstractmethod
 from unittest.mock import MagicMock
+from payments.interfaces import PaymentGateway as ModularPaymentGateway
 
 # --- KYC and Booking Logic ---
 
@@ -58,7 +59,7 @@ def search_properties(query="", province=None, property_type=None):
 
     return results
 
-# --- Payment Logic (Strategy Pattern) ---
+# --- Payment Logic (Legacy support and Adapter) ---
 
 class PaymentGateway(ABC):
     @abstractmethod
@@ -78,6 +79,18 @@ class MockPaymentGateway(PaymentGateway):
             "reference": reference,
             "timestamp": datetime.now().isoformat()
         }
+
+class ModularPaymentAdapter(PaymentGateway):
+    """
+    Adapts the new modular PaymentGateway to the legacy process_payment interface.
+    """
+    def __init__(self, provider_gateway: ModularPaymentGateway, phone_number: str):
+        self.gateway = provider_gateway
+        self.phone_number = phone_number
+
+    def process_payment(self, amount, currency, reference):
+        result = self.gateway.initiate_payment(amount, currency, self.phone_number, reference)
+        return result
 
 # --- IoT Logic (Jeedom JSON-RPC 2.0) ---
 
