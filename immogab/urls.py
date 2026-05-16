@@ -11,3 +11,6 @@ urlpatterns = [
     path("api/", include(router.urls)),
     path("api/auth/", include("rest_framework.urls")), # Basic DRF auth for browsable API
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
