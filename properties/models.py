@@ -3,22 +3,22 @@ from django.utils.translation import gettext_lazy as _
 
 class Property(models.Model):
     PROVINCE_CHOICES = [
-        ('estuaire', 'Estuaire'),
-        ('haut_ogooue', 'Haut-Ogooué'),
-        ('moyen_ogooue', 'Moyen-Ogooué'),
-        ('ngounie', 'Ngounié'),
-        ('nyanga', 'Nyanga'),
-        ('ogooue_ivindo', 'Ogooué-Ivindo'),
-        ('ogooue_lolo', 'Ogooué-Lolo'),
-        ('ogooue_maritime', 'Ogooué-Maritime'),
-        ('woleu_ntem', 'Woleu-Ntem'),
+        ('estuaire', _('Estuaire')),
+        ('haut_ogooue', _('Haut-Ogooué')),
+        ('moyen_ogooue', _('Moyen-Ogooué')),
+        ('ngounie', _('Ngounié')),
+        ('nyanga', _('Nyanga')),
+        ('ogooue_ivindo', _('Ogooué-Ivindo')),
+        ('ogooue_lolo', _('Ogooué-Lolo')),
+        ('ogooue_maritime', _('Ogooué-Maritime')),
+        ('woleu_ntem', _('Woleu-Ntem')),
     ]
 
     TYPE_CHOICES = [
-        ('terrain', 'Terrain'),
-        ('maison', 'Maison'),
-        ('appartement', 'Appartement'),
-        ('espace_evenementiel', 'Espace Événementiel'),
+        ('terrain', _('Terrain')),
+        ('maison', _('Maison')),
+        ('appartement', _('Appartement')),
+        ('espace_evenementiel', _('Espace Événementiel')),
     ]
 
     title = models.CharField(_("Titre"), max_length=255)

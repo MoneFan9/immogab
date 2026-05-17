@@ -17,10 +17,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-placeholder-for-dev-only")
+SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",")] if os.getenv("ALLOWED_HOSTS") else ["*"]
+if not SECRET_KEY and not DEBUG:
+    raise ValueError("SECRET_KEY environment variable is required in production.")
+elif not SECRET_KEY:
+    SECRET_KEY = "django-insecure-placeholder-for-dev-only"
+
+if os.getenv("ALLOWED_HOSTS"):
+    ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS").split(",")]
+else:
+    ALLOWED_HOSTS = [] if not DEBUG else ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -41,6 +49,7 @@ INSTALLED_APPS = [
     "django_filters",
 
     # Local apps
+    "users",
     "core",
     "properties",
     "bookings",
@@ -80,19 +89,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "immogab.wsgi.application"
 
-AUTH_USER_MODEL = "users.User"
-
 # Database
 # Use dj-database-url for production parity
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default=os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600,
         conn_health_checks=True,
     )
 }
-
-AUTH_USER_MODEL = "core.User"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -132,8 +137,8 @@ REST_FRAMEWORK = {
 
 # Simple JWT configuration
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", 15))),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(os.getenv("JWT_REFRESH_TOKEN_LIFETIME_DAYS", 1))),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
@@ -169,10 +174,3 @@ if not DEBUG:
 CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")] if os.getenv("CORS_ALLOWED_ORIGINS") else []
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")] if os.getenv("CSRF_TRUSTED_ORIGINS") else []
 
-# Celery configuration
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = TIME_ZONE
