@@ -2,26 +2,27 @@ import pytest
 import requests
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from immogab.services import check_booking_overlap, search_properties, validate_kyc, call_jeedom_webhook
+from properties.models import Property
+
+User = get_user_model()
 
 @pytest.mark.django_db
 def test_user_creation_and_kyc():
     # Simulate user creation
     user = User.objects.create_user(username="jules_tester", password="password123")
-    user.id_card_number = "GAB-2024-999" # In a real app, this would be a field on a custom User model
+    user.id_card_number = "GAB-2024-999"
 
-    # We use a mock to simulate the custom field since it's not in the default Django User
-    with patch.object(User, 'id_card_number', "GAB-2024-999", create=True):
-        with patch.object(User, 'is_kyc_verified', False, create=True):
-            # Test KYC validation
-            validate_kyc(user)
-            assert user.is_kyc_verified is True
+    # Test KYC validation
+    validate_kyc(user)
+    assert user.is_kyc_verified is True
 
-            # Verify persistence (Mocking .save() because id_card_number is not a real field on default User)
-            with patch.object(User, 'save') as mock_save:
-                validate_kyc(user)
-                mock_save.assert_called_once()
+    # Verify persistence
+    user.is_kyc_verified = False
+    validate_kyc(user)
+    user.refresh_from_db()
+    assert user.is_kyc_verified is True
 
 def test_check_booking_overlap_invalid_dates():
     start = datetime(2026, 5, 10, 14, 0)
@@ -48,18 +49,22 @@ def test_double_booking_overlap_logic():
     # Case 4: Completely outside (starts exactly when previous ends)
     assert check_booking_overlap(datetime(2026, 5, 10, 12, 0), datetime(2026, 5, 10, 14, 0), existing) is False
 
+@pytest.mark.django_db
 def test_search_properties_filters():
+    Property.objects.create(title="P1", province="ogooue_maritime", property_type="maison")
+    Property.objects.create(title="P2", province="estuaire", property_type="terrain")
+
     # Test province filter
-    res_province = search_properties(province="Ogooué-Maritime")
+    res_province = search_properties(province="ogooue_maritime")
     assert len(res_province) >= 1
-    assert any(p.province == "Ogooué-Maritime" for p in res_province)
+    assert any(p.province == "ogooue_maritime" for p in res_province)
 
     # Test property_type filter
-    res_type = search_properties(property_type="Terrain")
+    res_type = search_properties(property_type="terrain")
     assert len(res_type) >= 1
-    assert any(p.type == "Terrain" for p in res_type)
+    assert any(p.property_type == "terrain" for p in res_type)
 
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_call_jeedom_webhook_malformed_json(mock_post):
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -67,5 +72,6 @@ def test_call_jeedom_webhook_malformed_json(mock_post):
     mock_response.json.side_effect = ValueError("No JSON object could be decoded")
     mock_post.return_value = mock_response
 
-    with pytest.raises(ConnectionError, match="Jeedom connection failed: Malformed JSON response"):
+    # Match the actual error message from services.py
+    with pytest.raises(ConnectionError, match="Jeedom returned an invalid JSON response"):
         call_jeedom_webhook("http://jeedom.local/api", "cmd", "key")

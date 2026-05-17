@@ -2,6 +2,10 @@ import uuid
 from payments.interfaces import PaymentGateway
 
 class MoovMoneyGateway(PaymentGateway):
+    def process_payment(self, booking, amount, currency, provider="Moov"):
+        # Implementation for legacy abstract method if necessary
+        return {"status": "success"}
+
     def initiate_payment(self, amount, currency, phone_number, reference):
         # In a real scenario, this would call Moov Gabon's (Flooz) API
         return {

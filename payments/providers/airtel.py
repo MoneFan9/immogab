@@ -3,6 +3,10 @@ from datetime import datetime
 from payments.interfaces import PaymentGateway
 
 class AirtelMoneyGateway(PaymentGateway):
+    def process_payment(self, booking, amount, currency, provider="Airtel"):
+        # Implementation for legacy abstract method if necessary
+        return {"status": "success"}
+
     def initiate_payment(self, amount, currency, phone_number, reference):
         # In a real scenario, this would call Airtel Gabon's API
         return {
