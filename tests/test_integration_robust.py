@@ -25,12 +25,26 @@ class PersistentMock:
             'id_card_number': getattr(self, 'id_card_number', None)
         }
 
+@pytest.mark.django_db
 def test_e2e_robust_journey_and_failures():
+    # Setup: Create a property since search_properties uses the real DB
+    from properties.models import Property
+    Property.objects.get_or_create(
+        title="Appartement Moderne",
+        defaults={
+            "description": "Au coeur de Libreville",
+            "property_type": "maison",
+            "province": "estuaire",
+            "city": "Libreville",
+            "neighborhood": "Akanda"
+        }
+    )
+
     # 1. Search for a house in Libreville (Simulation)
     properties = search_properties(query="Libreville")
     assert len(properties) > 0
     target_property = properties[0]
-    assert target_property.location == "Libreville"
+    assert target_property.city == "Libreville"
 
     # 2. KYC Validation with Persistence Check
     # Using PersistentMock to verify that .save() is called and changes are intended for persistence
@@ -51,12 +65,21 @@ def test_e2e_robust_journey_and_failures():
         check_booking_overlap(start, end, [])
 
     # 4. Payment Simulation
-    gateway = MockPaymentGateway()
-    payment = gateway.process_payment(15000, "XAF", "REF-001")
-    assert payment["status"] == "success"
+    # We mock the celery task to avoid Redis connection error
+    with patch("payments.services.simulate_mobile_money_webhook.delay") as mock_delay:
+        mock_delay.return_value = MagicMock(id="task-123")
+
+        # We need a real user for legacy MockPaymentGateway
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        User.objects.get_or_create(id=1, defaults={'username': 'testuser_robust'})
+
+        gateway = MockPaymentGateway()
+        payment = gateway.process_payment(15000, "XAF", "REF-001")
+        assert payment["status"] == "initiated"
 
     # 5. Jeedom Webhook with Robustness Check (Invalid JSON Response)
-    with patch("requests.post") as mock_post:
+    with patch("requests.Session.post") as mock_post:
         # Simulate a 200 OK but with malformed JSON
         mock_response = MagicMock()
         mock_response.status_code = 200

@@ -5,7 +5,6 @@ from immogab.services import (
     validate_kyc,
     check_booking_overlap,
     call_jeedom_webhook,
-    # These will be implemented next
 )
 
 @pytest.fixture
@@ -20,20 +19,23 @@ def mock_property():
     prop = MagicMock()
     prop.id = 1
     prop.title = "Villa à Libreville"
-    prop.location = "Libreville"
+    prop.city = "Libreville"
     prop.hourly_rate = 5000
     return prop
 
 @pytest.mark.django_db
-@patch("requests.post")
-def test_e2e_journey_success(mock_post, mock_user, mock_property):
+@patch("requests.Session.post")
+@patch("payments.services.simulate_mobile_money_webhook.delay")
+def test_e2e_journey_success(mock_delay, mock_post, mock_user, mock_property):
+    mock_delay.return_value = MagicMock(id="task-123")
+
     # 1. Search for a house in Libreville
     from properties.models import Property
     Property.objects.create(
         title="Villa à Libreville",
         description="Une belle villa",
-        property_type="MAISON",
-        province="Estuaire",
+        property_type="maison",
+        province="estuaire",
         city="Libreville",
         neighborhood="Sablière"
     )
@@ -82,7 +84,6 @@ def test_e2e_journey_success(mock_post, mock_user, mock_property):
     assert jeedom_result is True
 
     # Check if the signal sent followed JSON-RPC 2.0
-    # Note: requests.Session.post is called inside call_jeedom_webhook
     args, kwargs = mock_post.call_args
     sent_json = kwargs["json"]
     assert sent_json["jsonrpc"] == "2.0"

@@ -5,6 +5,9 @@ from abc import ABC, abstractmethod
 from unittest.mock import MagicMock
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from django.db.models import Q
+from properties.models import Property
+from payments.interfaces import ModularPaymentGateway
 
 # --- KYC and Booking Logic ---
 
