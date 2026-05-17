@@ -6,9 +6,9 @@ from immogab.services import (
     validate_kyc,
     check_booking_overlap,
     call_jeedom_webhook,
-    search_properties,
-    MockPaymentGateway
+    search_properties
 )
+from properties.models import Property
 
 class PersistentMock:
     """A mock that can simulate DB persistence."""
@@ -25,12 +25,21 @@ class PersistentMock:
             'id_card_number': getattr(self, 'id_card_number', None)
         }
 
+@pytest.mark.django_db
 def test_e2e_robust_journey_and_failures():
-    # 1. Search for a house in Libreville (Simulation)
+    # Pre-create a property for search
+    Property.objects.create(
+        title="House in Libreville",
+        city="Libreville",
+        province="estuaire",
+        property_type="maison"
+    )
+
+    # 1. Search for a house in Libreville (Real ORM)
     properties = search_properties(query="Libreville")
     assert len(properties) > 0
     target_property = properties[0]
-    assert target_property.location == "Libreville"
+    assert target_property.city == "Libreville"
 
     # 2. KYC Validation with Persistence Check
     # Using PersistentMock to verify that .save() is called and changes are intended for persistence
@@ -50,13 +59,8 @@ def test_e2e_robust_journey_and_failures():
     with pytest.raises(ValueError, match="Start time must be before end time"):
         check_booking_overlap(start, end, [])
 
-    # 4. Payment Simulation
-    gateway = MockPaymentGateway()
-    payment = gateway.process_payment(15000, "XAF", "REF-001")
-    assert payment["status"] == "success"
-
-    # 5. Jeedom Webhook with Robustness Check (Invalid JSON Response)
-    with patch("requests.post") as mock_post:
+    # 4. Jeedom Webhook with Robustness Check (Invalid JSON Response)
+    with patch("requests.Session.post") as mock_post:
         # Simulate a 200 OK but with malformed JSON
         mock_response = MagicMock()
         mock_response.status_code = 200

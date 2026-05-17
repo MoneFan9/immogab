@@ -2,39 +2,40 @@ import time
 from celery import shared_task
 from django.conf import settings
 from decimal import Decimal
-from .models import Payment
+from .models import PaymentTransaction
 from .logic import calculate_revenue_split
 
 @shared_task
-def simulate_mobile_money_webhook(payment_id):
+def simulate_mobile_money_webhook(transaction_db_id):
     """
     Simulates the asynchronous nature of mobile money payments in Gabon.
-    Wait for a few seconds, then update the payment status and split revenue.
+    Wait for a few seconds, then update the transaction status and split revenue.
     """
     try:
-        payment = Payment.objects.get(id=payment_id)
+        tx = PaymentTransaction.objects.get(id=transaction_db_id)
 
         # Simulate network/provider delay
         time.sleep(2)
 
         # Calculate revenue split
         commission_rate = getattr(settings, 'IMMOGAB_COMMISSION_RATE', Decimal('0.15'))
-        split = calculate_revenue_split(payment.amount, commission_rate)
+        split = calculate_revenue_split(tx.amount, commission_rate)
 
-        # Update payment
-        payment.commission_amount = split['commission']
-        payment.host_amount = split['host']
-        payment.status = 'SUCCESS'
-        payment.save()
+        # Update transaction
+        tx.commission_amount = split['commission']
+        tx.host_amount = split['host']
+        tx.status = 'SUCCESS'
+        tx.save()
 
         # Update booking status
-        booking = payment.booking
-        booking.status = 'PAID'
-        booking.save()
+        if tx.booking:
+            booking = tx.booking
+            booking.status = 'PAID'
+            booking.save()
 
-        return f"Payment {payment_id} processed successfully."
+        return f"Transaction {transaction_db_id} processed successfully."
 
-    except Payment.DoesNotExist:
-        return f"Payment {payment_id} not found."
+    except PaymentTransaction.DoesNotExist:
+        return f"Transaction {transaction_db_id} not found."
     except Exception as e:
-        return f"Error processing payment {payment_id}: {str(e)}"
+        return f"Error processing transaction {transaction_db_id}: {str(e)}"

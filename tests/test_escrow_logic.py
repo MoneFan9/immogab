@@ -1,13 +1,15 @@
 import pytest
 from django.utils import timezone
 from datetime import timedelta
-from core.models import User
+from django.contrib.auth import get_user_model
 from properties.models import Property
 from bookings.models import Booking
 from escrow.models import Escrow
 from escrow.services import freeze_escrow, release_escrow, report_noise_complaint
 from escrow.tasks import schedule_escrow_release
 from unittest.mock import patch
+
+User = get_user_model()
 
 @pytest.mark.django_db
 class TestEscrowLogic:

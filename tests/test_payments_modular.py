@@ -37,14 +37,15 @@ class TestModularPayments:
             phone_number="077000000"
         )
 
-        url = reverse("payment-webhook", kwargs={"provider": "airtel"})
+        url = reverse("mobile_money_webhook", kwargs={"provider": "airtel"})
         payload = {
             "airtel_status": "00",
             "airtel_ref": "AIRTEL_EXTERNAL_789",
             "custom_id": "TX_AIRTEL_123"
         }
 
-        response = client.post(url, data=payload, content_type="application/json")
+        response = client.post(url, data=payload, content_type="application/json", secure=True)
+
         assert response.status_code == 200
 
         tx.refresh_from_db()
@@ -60,14 +61,15 @@ class TestModularPayments:
             phone_number="066000000"
         )
 
-        url = reverse("payment-webhook", kwargs={"provider": "moov"})
+        url = reverse("mobile_money_webhook", kwargs={"provider": "moov"})
         payload = {
             "result": "completed",
             "moov_trans_id": "MOOV_EXTERNAL_001",
             "client_reference": "TX_MOOV_456"
         }
 
-        response = client.post(url, data=payload, content_type="application/json")
+        response = client.post(url, data=payload, content_type="application/json", secure=True)
+
         assert response.status_code == 200
 
         tx.refresh_from_db()

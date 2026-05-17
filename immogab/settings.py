@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
     # Local apps
     "core",
+    "users",
     "properties",
     "bookings",
     "escrow",
@@ -80,8 +81,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "immogab.wsgi.application"
 
-AUTH_USER_MODEL = "users.User"
-
 # Database
 # Use dj-database-url for production parity
 DATABASES = {
@@ -91,8 +90,6 @@ DATABASES = {
         conn_health_checks=True,
     )
 }
-
-AUTH_USER_MODEL = "core.User"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -104,6 +101,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
+APPEND_SLASH = True
 LANGUAGE_CODE = "fr-fr"
 TIME_ZONE = "Africa/Libreville"
 USE_I18N = True
