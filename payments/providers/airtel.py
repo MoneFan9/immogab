@@ -1,8 +1,12 @@
 import uuid
 from datetime import datetime
-from payments.interfaces import PaymentGateway
+from payments.interfaces import ModularPaymentGateway
 
-class AirtelMoneyGateway(PaymentGateway):
+class AirtelMoneyGateway(ModularPaymentGateway):
+    def process_payment(self, booking, amount, currency, provider):
+        # Implementation for the abstract method in PaymentGateway
+        pass
+
     def initiate_payment(self, amount, currency, phone_number, reference):
         # In a real scenario, this would call Airtel Gabon's API
         return {
