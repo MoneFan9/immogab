@@ -93,13 +93,15 @@ class ModularPaymentAdapter(PaymentGateway):
     """
     Adapts the new modular PaymentGateway to the legacy process_payment interface.
     """
-    def __init__(self, provider_gateway: ModularPaymentGateway, phone_number: str):
+    def __init__(self, provider_gateway, phone_number: str):
         self.gateway = provider_gateway
         self.phone_number = phone_number
 
     def process_payment(self, amount, currency, reference):
-        result = self.gateway.initiate_payment(amount, currency, self.phone_number, reference)
-        return result
+        # Fallback to a mock implementation if initiate_payment is missing
+        if hasattr(self.gateway, 'initiate_payment'):
+            return self.gateway.initiate_payment(amount, currency, self.phone_number, reference)
+        return {"status": "error", "message": "Provider gateway not implemented"}
 
 # --- IoT Logic (Jeedom JSON-RPC 2.0) ---
 
