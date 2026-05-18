@@ -7,7 +7,6 @@ import dj_database_url
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
-import dj_database_url
 
 # Load environment variables from .env file
 load_dotenv()
@@ -42,6 +41,7 @@ INSTALLED_APPS = [
 
     # Local apps
     "core",
+    "users",
     "properties",
     "bookings",
     "escrow",
@@ -80,19 +80,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "immogab.wsgi.application"
 
-AUTH_USER_MODEL = "users.User"
-
 # Database
 # Use dj-database-url for production parity
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default=os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600,
         conn_health_checks=True,
     )
 }
-
-AUTH_USER_MODEL = "core.User"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -168,11 +164,3 @@ if not DEBUG:
 # CORS/CSRF
 CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")] if os.getenv("CORS_ALLOWED_ORIGINS") else []
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")] if os.getenv("CSRF_TRUSTED_ORIGINS") else []
-
-# Celery configuration
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = TIME_ZONE
