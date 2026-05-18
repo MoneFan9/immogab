@@ -3,6 +3,8 @@ import uuid
 from datetime import datetime
 from abc import ABC, abstractmethod
 from unittest.mock import MagicMock
+from django.db.models import Q
+from properties.models import Property
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -89,17 +91,6 @@ class MockPaymentGateway(PaymentGateway):
         new_gateway = NewMockGateway()
         return new_gateway.process_payment(booking, amount, currency, "Legacy Provider")
 
-class ModularPaymentAdapter(PaymentGateway):
-    """
-    Adapts the new modular PaymentGateway to the legacy process_payment interface.
-    """
-    def __init__(self, provider_gateway: ModularPaymentGateway, phone_number: str):
-        self.gateway = provider_gateway
-        self.phone_number = phone_number
-
-    def process_payment(self, amount, currency, reference):
-        result = self.gateway.initiate_payment(amount, currency, self.phone_number, reference)
-        return result
 
 # --- IoT Logic (Jeedom JSON-RPC 2.0) ---
 
