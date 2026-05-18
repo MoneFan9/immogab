@@ -12,6 +12,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - immogab-net
 
   redis:
     image: redis:7-alpine
@@ -20,6 +22,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - immogab-net
 
   web:
     build: .
@@ -41,6 +45,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - immogab-net
 
   worker:
     build: .
@@ -61,6 +67,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - immogab-net
+
+networks:
+  immogab-net:
+    driver: bridge
 
 volumes:
   postgres_data:
