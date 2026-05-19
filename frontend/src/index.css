@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brand-primary: var(--color-blue-600);
+  --radius-brand: 1rem;
+}

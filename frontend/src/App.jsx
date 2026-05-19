@@ -56,7 +56,7 @@ function App() {
               <div className="bg-blue-600 p-2 rounded-lg">
                 <Home className="text-white" size={24} />
               </div>
-              <span className="text-2xl font-bold text-gray-900 tracking-tight">Immo<span className="text-blue-600">Gab</span></span>
+              <span className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">Immo<span className="text-blue-600">Gab</span></span>
             </div>
 
             <div className="hidden md:flex items-center gap-8 text-gray-600 font-medium">
@@ -110,12 +110,12 @@ function App() {
                 {view === 'guest' ? (
                   <>
                     <LayoutDashboard size={18} />
-                    Mode Hôte
+                    <span className="hidden sm:inline">Mode Hôte</span>
                   </>
                 ) : (
                   <>
                     <SwitchCamera size={18} />
-                    Vue Voyageur
+                    <span className="hidden sm:inline">Vue Voyageur</span>
                   </>
                 )}
               </button>
@@ -194,18 +194,18 @@ function App() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-100 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
             <div className="flex items-center gap-2">
               <div className="bg-blue-600 p-2 rounded-lg">
                 <Home className="text-white" size={20} />
               </div>
               <span className="text-xl font-bold text-gray-900">ImmoGab</span>
             </div>
-            <p className="text-gray-500">© 2026 ImmoGab SAS. Tous droits réservés.</p>
-            <div className="flex gap-6 text-gray-500">
-              <a href="#" className="hover:text-blue-600">Conditions</a>
-              <a href="#" className="hover:text-blue-600">Confidentialité</a>
-              <a href="#" className="hover:text-blue-600">Aide</a>
+            <p className="text-gray-500 text-sm md:text-base">© 2026 ImmoGab SAS. Tous droits réservés.</p>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-gray-500 text-sm font-medium">
+              <a href="#" className="hover:text-blue-600 transition-colors">Conditions</a>
+              <a href="#" className="hover:text-blue-600 transition-colors">Confidentialité</a>
+              <a href="#" className="hover:text-blue-600 transition-colors">Aide</a>
             </div>
           </div>
         </div>
