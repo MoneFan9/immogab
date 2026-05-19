@@ -93,11 +93,13 @@ class ModularPaymentAdapter(PaymentGateway):
     """
     Adapts the new modular PaymentGateway to the legacy process_payment interface.
     """
-    def __init__(self, provider_gateway: ModularPaymentGateway, phone_number: str):
+    def __init__(self, provider_gateway, phone_number: str):
         self.gateway = provider_gateway
         self.phone_number = phone_number
 
     def process_payment(self, amount, currency, reference):
+        # Note: In the new architecture, we usually have a booking object.
+        # This adapter follows the legacy interface which doesn't include it.
         result = self.gateway.initiate_payment(amount, currency, self.phone_number, reference)
         return result
 
