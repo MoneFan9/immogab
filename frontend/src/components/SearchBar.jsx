@@ -27,7 +27,7 @@ export default function SearchBar({ filters, setFilters, onSearch }) {
           />
         </div>
 
-        <div className="flex flex-1 gap-4">
+        <div className="flex flex-col sm:flex-row flex-1 gap-4">
           <select
             className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             value={filters.province}
@@ -53,7 +53,7 @@ export default function SearchBar({ filters, setFilters, onSearch }) {
 
         <button
           onClick={onSearch}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+          className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
         >
           <Search size={20} />
           Rechercher
