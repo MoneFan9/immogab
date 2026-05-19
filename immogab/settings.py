@@ -6,8 +6,8 @@ import os
 import dj_database_url
 from pathlib import Path
 from datetime import timedelta
+from decimal import Decimal
 from dotenv import load_dotenv
-import dj_database_url
 
 # Load environment variables from .env file
 load_dotenv()
@@ -17,10 +17,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-placeholder-for-dev-only")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",")] if os.getenv("ALLOWED_HOSTS") else ["*"]
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY and not DEBUG:
+    raise ValueError("The SECRET_KEY environment variable must be set in production.")
+SECRET_KEY = SECRET_KEY or "django-insecure-placeholder-for-dev-only"
+
+if DEBUG:
+    ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",")]
+else:
+    ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",")] if os.getenv("ALLOWED_HOSTS") else []
 
 
 # Application definition
@@ -41,14 +48,13 @@ INSTALLED_APPS = [
     "django_filters",
 
     # Local apps
+    "users",
     "core",
     "properties",
     "bookings",
     "escrow",
     "payments",
 ]
-
-AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -92,8 +98,6 @@ DATABASES = {
     )
 }
 
-AUTH_USER_MODEL = "core.User"
-
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -132,8 +136,8 @@ REST_FRAMEWORK = {
 
 # Simple JWT configuration
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", 15))),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(os.getenv("JWT_REFRESH_TOKEN_LIFETIME_DAYS", 1))),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
@@ -153,7 +157,12 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 # Business Logic Settings
-IMMOGAB_COMMISSION_RATE = 0.15
+IMMOGAB_COMMISSION_RATE = Decimal(os.getenv("IMMOGAB_COMMISSION_RATE", "0.15"))
+
+# Webhook Security
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
+if not WEBHOOK_SECRET and not DEBUG:
+    raise ValueError("WEBHOOK_SECRET must be set in production.")
 
 # Security Hardening
 if not DEBUG:
@@ -168,11 +177,3 @@ if not DEBUG:
 # CORS/CSRF
 CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")] if os.getenv("CORS_ALLOWED_ORIGINS") else []
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")] if os.getenv("CSRF_TRUSTED_ORIGINS") else []
-
-# Celery configuration
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = TIME_ZONE
