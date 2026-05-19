@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Escrow
 from .serializers import EscrowSerializer
-from .services import report_noise_complaint
+from .services import claim_escrow
 
 class EscrowViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Escrow.objects.all()
@@ -16,11 +16,11 @@ class EscrowViewSet(viewsets.ReadOnlyModelViewSet):
         Usually called by an IoT device (Jeedom) or an admin.
         """
         escrow = self.get_object()
-        if not escrow.is_frozen or escrow.is_released:
+        if escrow.status != Escrow.EscrowStatus.FROZEN:
             return Response(
-                {"error": "La caution n'est pas active ou est déjà libérée."},
+                {"error": f"La caution ne peut pas être réclamée car son statut est: {escrow.status}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        report_noise_complaint(escrow)
-        return Response({"status": "Tapage nocturne signalé, la caution est bloquée."}, status=status.HTTP_200_OK)
+        claim_escrow(escrow)
+        return Response({"status": "Tapage nocturne signalé, la caution est bloquée (CLAIMED)."}, status=status.HTTP_200_OK)

@@ -5,6 +5,7 @@ from .serializers import BookingSerializer
 from escrow.services import freeze_escrow
 from escrow.tasks import schedule_escrow_release
 from django.utils import timezone
+from datetime import timedelta
 from decimal import Decimal
 
 class BookingViewSet(viewsets.ModelViewSet):
@@ -23,12 +24,15 @@ class BookingViewSet(viewsets.ModelViewSet):
             booking.total_price = hours * booking.property.price_per_hour
             booking.save()
 
-        # If it's an event space, we freeze an escrow (caution)
-        if booking.property.property_type == 'espace_evenementiel':
-            # Logic refined: we freeze a caution of 100,000 XAF for events by default
-            # or a percentage of the total price.
-            caution_amount = Decimal('100000')
+        # If it's an event space or has a configured caution, we freeze an escrow
+        if booking.property.property_type == 'espace_evenementiel' or booking.property.caution_amount > 0:
+            caution_amount = booking.property.caution_amount
+            # Fallback for event spaces if not set
+            if caution_amount == 0 and booking.property.property_type == 'espace_evenementiel':
+                caution_amount = Decimal('100000')
+
             escrow = freeze_escrow(booking, caution_amount)
 
-            # Schedule the release task (eta = booking.end_time)
-            schedule_escrow_release.apply_async((escrow.id,), eta=booking.end_time)
+            # Schedule the release task after grace period (end_time + 2 hours)
+            release_eta = booking.end_time + timedelta(hours=2)
+            schedule_escrow_release.apply_async((escrow.id,), eta=release_eta)

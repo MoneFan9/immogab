@@ -29,7 +29,7 @@ class TestEscrowLogic:
 
     def test_freeze_escrow(self):
         escrow = freeze_escrow(self.booking, 100000)
-        assert escrow.is_frozen is True
+        assert escrow.status == Escrow.EscrowStatus.FROZEN
         assert escrow.amount == 100000
         assert escrow.frozen_at is not None
 
@@ -37,26 +37,40 @@ class TestEscrowLogic:
         escrow = freeze_escrow(self.booking, 100000)
         success = release_escrow(escrow)
         assert success is True
-        assert escrow.is_released is True
+        assert escrow.status == Escrow.EscrowStatus.RELEASED
         assert escrow.released_at is not None
 
     def test_release_escrow_blocked_by_noise(self):
         escrow = freeze_escrow(self.booking, 100000)
         report_noise_complaint(escrow)
+        assert escrow.status == Escrow.EscrowStatus.CLAIMED
         success = release_escrow(escrow)
         assert success is False
-        assert escrow.is_released is False
+        assert escrow.status == Escrow.EscrowStatus.CLAIMED
         assert escrow.has_noise_complaint is True
 
     def test_task_release_escrow_success(self):
-        escrow = freeze_escrow(self.booking, 100000)
         # Booking ended 1 hour ago (in setup)
+        # We need to set end_time to 3 hours ago to pass the 2-hour grace period
+        self.booking.end_time = timezone.now() - timedelta(hours=3)
+        self.booking.save()
+
+        escrow = freeze_escrow(self.booking, 100000)
         result = schedule_escrow_release(escrow.id)
         assert result == "Released"
         escrow.refresh_from_db()
-        assert escrow.is_released is True
+        assert escrow.status == Escrow.EscrowStatus.RELEASED
 
-    def test_task_release_escrow_too_early(self):
+    def test_task_release_escrow_too_early_during_grace_period(self):
+        # Booking ended 1 hour ago (in setup)
+        # 2-hour grace period means it's still too early
+        escrow = freeze_escrow(self.booking, 100000)
+        result = schedule_escrow_release(escrow.id)
+        assert result == "Too early (grace period active)"
+        escrow.refresh_from_db()
+        assert escrow.status == Escrow.EscrowStatus.FROZEN
+
+    def test_task_release_escrow_too_early_before_end(self):
         future_booking = Booking.objects.create(
             user=self.user,
             property=self.property,
@@ -66,6 +80,6 @@ class TestEscrowLogic:
         )
         escrow = freeze_escrow(future_booking, 100000)
         result = schedule_escrow_release(escrow.id)
-        assert result == "Too early"
+        assert result == "Too early (grace period active)"
         escrow.refresh_from_db()
-        assert escrow.is_released is False
+        assert escrow.status == Escrow.EscrowStatus.FROZEN
