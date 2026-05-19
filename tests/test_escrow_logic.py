@@ -1,7 +1,7 @@
 import pytest
 from django.utils import timezone
 from datetime import timedelta
-from core.models import User
+from users.models import User
 from properties.models import Property
 from bookings.models import Booking
 from escrow.models import Escrow
