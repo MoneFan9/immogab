@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PlusCircle, Home, Settings } from 'lucide-react';
+import { PlusCircle, Home, Settings, Calendar, Wallet } from 'lucide-react';
 import AddPropertyForm from './AddPropertyForm';
 import IncomeHistory from './IncomeHistory';
 import { hostService } from '../services/hostService';
@@ -7,13 +7,26 @@ import { hostService } from '../services/hostService';
 const HostDashboard = () => {
   const [activeTab, setActiveTab] = useState('properties');
   const [properties, setProperties] = useState([]);
+  const [stats, setStats] = useState({ total: 0, activeCount: 0, bookingsThisMonth: 0 });
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
 
   const fetchHostData = useCallback(async () => {
     setLoading(true);
-    const data = await hostService.getHostProperties();
-    setProperties(data);
+    const [propertiesData, incomeData] = await Promise.all([
+      hostService.getHostProperties(),
+      hostService.getIncomeHistory()
+    ]);
+    setProperties(propertiesData);
+    setStats({
+      total: incomeData.stats.total,
+      activeCount: propertiesData.length,
+      bookingsThisMonth: incomeData.transactions.filter(t => {
+        const date = new Date(t.date);
+        const now = new Date();
+        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      }).length
+    });
     setLoading(false);
   }, []);
 
@@ -29,14 +42,48 @@ const HostDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Espace Hôte</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Espace Hôte</h1>
+          <p className="text-gray-500">Gérez vos biens et suivez vos performances.</p>
+        </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
         >
           <PlusCircle size={20} />
           Ajouter un bien
         </button>
+      </div>
+
+      {/* Performance Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="bg-emerald-100 p-3 rounded-xl">
+            <Wallet className="text-emerald-600" size={24} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Revenus Totaux</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.total.toLocaleString()} FCFA</p>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="bg-blue-100 p-3 rounded-xl">
+            <Home className="text-blue-600" size={24} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Biens Actifs</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.activeCount}</p>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="bg-purple-100 p-3 rounded-xl">
+            <Calendar className="text-purple-600" size={24} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Réservations / mois</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.bookingsThisMonth}</p>
+          </div>
+        </div>
       </div>
 
       <div className="flex border-b border-gray-200 mb-8">
@@ -71,7 +118,7 @@ const HostDashboard = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {properties.map(property => (
-                <div key={property.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div key={property.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   <div className="h-48 bg-gray-200 relative">
                     {property.images && property.images[0] ? (
                       <img src={property.images[0]} alt={property.title} className="w-full h-full object-cover" />
@@ -92,7 +139,7 @@ const HostDashboard = () => {
                         {property.price_per_day ? `${property.price_per_day.toLocaleString()} FCFA / jour` : `${property.price_per_hour.toLocaleString()} FCFA / heure`}
                       </span>
                       <div className="flex gap-2">
-                        <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                        <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors border border-gray-100 rounded-lg">
                           <Settings size={18} />
                         </button>
                       </div>

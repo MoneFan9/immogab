@@ -19,6 +19,24 @@ const IncomeHistory = () => {
     fetchIncome();
   }, [fetchIncome]);
 
+  const handleExport = () => {
+    // Simulate CSV export
+    const headers = "ID,Propriété,Date,Type,Montant,Statut\n";
+    const csvContent = history.map(tx =>
+      `${tx.id},"${tx.property_title}",${tx.date},"${tx.type}",${tx.amount},${tx.status}`
+    ).join("\n");
+
+    const blob = new Blob([headers + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `revenus_immogab_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return <div className="animate-pulse space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -29,7 +47,7 @@ const IncomeHistory = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-500">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -70,8 +88,11 @@ const IncomeHistory = () => {
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="font-bold text-gray-900">Dernières Transactions</h3>
-          <button className="flex items-center gap-2 text-sm text-blue-600 font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
-            <Download size={16} /> Exporter
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 text-sm text-blue-600 font-bold hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors border border-blue-100"
+          >
+            <Download size={16} /> Exporter CSV
           </button>
         </div>
         <div className="overflow-x-auto">
@@ -102,7 +123,7 @@ const IncomeHistory = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`text-xs px-2 py-1 rounded-full font-bold ${
-                      tx.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                      tx.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                     }`}>
                       {tx.status === 'COMPLETED' ? 'Payé' : 'En attente'}
                     </span>
