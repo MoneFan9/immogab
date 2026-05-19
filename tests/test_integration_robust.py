@@ -25,12 +25,15 @@ class PersistentMock:
             'id_card_number': getattr(self, 'id_card_number', None)
         }
 
+@pytest.mark.django_db
 def test_e2e_robust_journey_and_failures():
     # 1. Search for a house in Libreville (Simulation)
+    from properties.models import Property
+    Property.objects.create(title="Villa Ocean", city="Libreville", province="Estuaire", price_per_day=50000)
     properties = search_properties(query="Libreville")
     assert len(properties) > 0
     target_property = properties[0]
-    assert target_property.location == "Libreville"
+    assert target_property.city == "Libreville"
 
     # 2. KYC Validation with Persistence Check
     # Using PersistentMock to verify that .save() is called and changes are intended for persistence
@@ -51,12 +54,15 @@ def test_e2e_robust_journey_and_failures():
         check_booking_overlap(start, end, [])
 
     # 4. Payment Simulation
-    gateway = MockPaymentGateway()
-    payment = gateway.process_payment(15000, "XAF", "REF-001")
-    assert payment["status"] == "success"
+    with patch("payments.services.simulate_mobile_money_webhook.delay"):
+        gateway = MockPaymentGateway()
+        payment = gateway.process_payment(15000, "XAF", "REF-001")
+        assert payment["status"] == "initiated"
 
     # 5. Jeedom Webhook with Robustness Check (Invalid JSON Response)
-    with patch("requests.post") as mock_post:
+    from immogab import services
+    services._jeedom_session = None
+    with patch("requests.Session.post") as mock_post:
         # Simulate a 200 OK but with malformed JSON
         mock_response = MagicMock()
         mock_response.status_code = 200

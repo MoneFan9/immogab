@@ -41,6 +41,8 @@ def search_properties(query="", province=None, property_type=None):
     """
     Searches for properties using the real Property model.
     """
+    from properties.models import Property
+    from django.db.models import Q
     queryset = Property.objects.all()
 
     if query:
@@ -73,14 +75,20 @@ class MockPaymentGateway(PaymentGateway):
     def process_payment(self, amount, currency, reference):
         from payments.services import MockPaymentGateway as NewMockGateway
         from bookings.models import Booking
+        from properties.models import Property
+        from django.contrib.auth import get_user_model
         from django.utils import timezone
+        User = get_user_model()
 
         # Backward compatibility layer for old tests
+        user, _ = User.objects.get_or_create(id=1, defaults={'username': 'legacy_user'})
+        prop, _ = Property.objects.get_or_create(id=1, defaults={'title': 'Legacy Property', 'price_per_day': 100})
+
         booking, _ = Booking.objects.get_or_create(
             id=999, # Dummy ID for legacy support
             defaults={
-                'user_id': 1, # Assuming user with ID 1 exists or is mocked
-                'property_id': 1,
+                'user': user,
+                'property': prop,
                 'start_time': timezone.now(),
                 'end_time': timezone.now(),
                 'total_price': amount
@@ -93,7 +101,7 @@ class ModularPaymentAdapter(PaymentGateway):
     """
     Adapts the new modular PaymentGateway to the legacy process_payment interface.
     """
-    def __init__(self, provider_gateway: ModularPaymentGateway, phone_number: str):
+    def __init__(self, provider_gateway, phone_number: str):
         self.gateway = provider_gateway
         self.phone_number = phone_number
 
@@ -103,10 +111,39 @@ class ModularPaymentAdapter(PaymentGateway):
 
 # --- IoT Logic (Jeedom JSON-RPC 2.0) ---
 
+# Module-level session for connection pooling
+_jeedom_session = None
+
+def get_jeedom_session():
+    """
+    Returns a configured requests session for Jeedom API calls.
+    Optimized for local IoT networks with connection pooling and robust retries.
+    """
+    global _jeedom_session
+    if _jeedom_session is None:
+        _jeedom_session = requests.Session()
+        # Robust Retry Strategy for local IoT networks (packet loss, transient failures, rate limits)
+        retry_strategy = Retry(
+            total=5,  # Increased to 5 retries for better resilience
+            backoff_factor=1,  # Exponential backoff: 1s, 2s, 4s, 8s, 16s
+            status_forcelist=[408, 429, 500, 502, 503, 504],
+            allowed_methods=["POST"],
+            raise_on_status=True
+        )
+        adapter = HTTPAdapter(
+            max_retries=retry_strategy,
+            pool_connections=10,
+            pool_maxsize=20
+        )
+        _jeedom_session.mount("http://", adapter)
+        _jeedom_session.mount("https://", adapter)
+        _jeedom_session.headers.update({"User-Agent": "ImmoGab-IoT-Agent/1.0"})
+    return _jeedom_session
+
 def call_jeedom_webhook(api_url, command, api_key):
     """
     Calls the Jeedom API to execute a command (e.g., smart lock).
-    Uses JSON-RPC 2.0 protocol with a robust retry strategy for local IoT networks.
+    Uses JSON-RPC 2.0 protocol with an optimized session for local IoT networks.
     """
     payload = {
         "jsonrpc": "2.0",
@@ -118,24 +155,16 @@ def call_jeedom_webhook(api_url, command, api_key):
         "id": 1
     }
 
-    # Robust Retry Strategy for local IoT networks (packet loss, transient failures)
-    retry_strategy = Retry(
-        total=3,  # 3 retries means 4 total attempts
-        backoff_factor=0.3,
-        status_forcelist=[500, 502, 503, 504],
-        allowed_methods=["POST"],
-        raise_on_status=True
-    )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session = requests.Session()
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
+    session = get_jeedom_session()
 
     try:
+        # Optimization: use (connect, read) timeout tuple.
+        # 3.05s to connect (slightly more than a TCP packet retransmission window)
+        # 27s to read (enough for local IoT response)
         response = session.post(
             api_url,
             json=payload,
-            timeout=5 # 5s per-attempt timeout
+            timeout=(3.05, 27)
         )
 
         if response.status_code == 200:
