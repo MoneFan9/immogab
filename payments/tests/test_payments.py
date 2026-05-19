@@ -3,8 +3,8 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from bookings.models import Booking
-from payments.models import Payment
-from payments.services import MockPaymentGateway
+from payments.models import PaymentTransaction as Payment
+from payments.gateways import MockPaymentGateway
 from payments.logic import calculate_revenue_split
 from payments.tasks import simulate_mobile_money_webhook
 

@@ -1,32 +1,28 @@
-from .interfaces import PaymentGateway
-from .models import Payment
-from .tasks import simulate_mobile_money_webhook
+from .models import PaymentTransaction
+from .factory import get_payment_gateway
 import uuid
 
-class MockPaymentGateway(PaymentGateway):
+def initiate_mobile_money_payment(booking, amount, currency, provider, phone_number):
     """
-    Mock implementation of a mobile money gateway in Gabon (Airtel/Moov).
-    Initiates a pending payment and triggers an asynchronous simulation.
+    Service to initiate a mobile money payment.
+    Creates a PaymentTransaction record and calls the provider's gateway.
     """
-    def process_payment(self, booking, amount, currency, provider):
-        reference = f"PAY-{uuid.uuid4().hex[:8].upper()}"
+    gateway = get_payment_gateway(provider)
 
-        # 1. Create a PENDING payment record
-        payment = Payment.objects.create(
-            booking=booking,
-            amount=amount,
-            reference=reference,
-            provider=provider,
-            status='PENDING'
-        )
+    reference = f"PAY-{uuid.uuid4().hex[:8].upper()}"
 
-        # 2. Trigger asynchronous simulation (Mobile Money takes time)
-        # We pass the payment ID to the task
-        simulate_mobile_money_webhook.delay(payment.id)
+    # 1. Initiate with provider
+    result = gateway.initiate_payment(amount, currency, phone_number, reference)
 
-        return {
-            "status": "initiated",
-            "payment_id": str(payment.id),
-            "reference": reference,
-            "message": "Payment initiated, waiting for provider confirmation."
-        }
+    # 2. Create local transaction record
+    PaymentTransaction.objects.create(
+        booking=booking,
+        amount=amount,
+        currency=currency,
+        transaction_id=result['transaction_id'],
+        provider=provider.upper(),
+        phone_number=phone_number,
+        status=PaymentTransaction.PaymentStatus.PENDING
+    )
+
+    return result

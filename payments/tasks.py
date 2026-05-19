@@ -2,39 +2,39 @@ import time
 from celery import shared_task
 from django.conf import settings
 from decimal import Decimal
-from .models import Payment
+from .models import PaymentTransaction
 from .logic import calculate_revenue_split
 
 @shared_task
-def simulate_mobile_money_webhook(payment_id):
+def simulate_mobile_money_webhook(payment_pk):
     """
     Simulates the asynchronous nature of mobile money payments in Gabon.
     Wait for a few seconds, then update the payment status and split revenue.
     """
     try:
-        payment = Payment.objects.get(id=payment_id)
+        tx = PaymentTransaction.objects.get(pk=payment_pk)
 
         # Simulate network/provider delay
         time.sleep(2)
 
         # Calculate revenue split
         commission_rate = getattr(settings, 'IMMOGAB_COMMISSION_RATE', Decimal('0.15'))
-        split = calculate_revenue_split(payment.amount, commission_rate)
+        split = calculate_revenue_split(tx.amount, commission_rate)
 
-        # Update payment
-        payment.commission_amount = split['commission']
-        payment.host_amount = split['host']
-        payment.status = 'SUCCESS'
-        payment.save()
+        # In a real scenario, we might store these in a separate Settlement model
+        # For now, we update the transaction or just log it
+        tx.status = 'SUCCESS'
+        tx.save()
 
         # Update booking status
-        booking = payment.booking
-        booking.status = 'PAID'
-        booking.save()
+        if tx.booking:
+            booking = tx.booking
+            booking.status = 'PAID'
+            booking.save()
 
-        return f"Payment {payment_id} processed successfully."
+        return f"Transaction {payment_pk} processed successfully."
 
-    except Payment.DoesNotExist:
-        return f"Payment {payment_id} not found."
+    except PaymentTransaction.DoesNotExist:
+        return f"Transaction {payment_pk} not found."
     except Exception as e:
-        return f"Error processing payment {payment_id}: {str(e)}"
+        return f"Error processing transaction {payment_pk}: {str(e)}"

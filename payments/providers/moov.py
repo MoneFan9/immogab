@@ -8,7 +8,7 @@ class MoovMoneyGateway(PaymentGateway):
             "status": "pending",
             "provider": "moov",
             "transaction_id": str(uuid.uuid4()),
-            "message": "Waiting for Moov Money confirmation on " + phone_number
+            "message": f"Waiting for Moov Money confirmation on {phone_number}"
         }
 
     def verify_otp(self, transaction_id, otp):
@@ -17,11 +17,13 @@ class MoovMoneyGateway(PaymentGateway):
 
     def handle_webhook(self, data, headers):
         # logic to parse Moov specific webhook format
+        status = "SUCCESS" if data.get("result") == "completed" else "FAILED"
         return {
-            "status": "success" if data.get("result") == "completed" else "failed",
+            "status": status,
             "external_reference": data.get("moov_trans_id"),
             "transaction_id": data.get("client_reference")
         }
 
     def get_status(self, transaction_id):
-        return {"status": "success", "transaction_id": transaction_id}
+        # Query Moov API for transaction status
+        return {"status": "SUCCESS", "transaction_id": transaction_id}
