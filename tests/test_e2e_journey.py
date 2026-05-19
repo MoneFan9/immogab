@@ -25,7 +25,7 @@ def mock_property():
     return prop
 
 @pytest.mark.django_db
-@patch("requests.post")
+@patch("requests.Session.post")
 def test_e2e_journey_success(mock_post, mock_user, mock_property):
     # 1. Search for a house in Libreville
     from properties.models import Property
@@ -62,9 +62,10 @@ def test_e2e_journey_success(mock_post, mock_user, mock_property):
     User = get_user_model()
     User.objects.get_or_create(id=1, defaults={'username': 'legacy_user'})
 
-    gateway = MockPaymentGateway()
-    payment_result = gateway.process_payment(amount=20000, currency="XAF", reference="BOOK-123")
-    assert payment_result["status"] == "initiated"
+    with patch("payments.services.simulate_mobile_money_webhook.delay"):
+        gateway = MockPaymentGateway()
+        payment_result = gateway.process_payment(amount=20000, currency="XAF", reference="BOOK-123")
+        assert payment_result["status"] == "initiated"
 
     # 5. Jeedom Signal
     # Mocking successful Jeedom response
